@@ -120,7 +120,7 @@
                 await SPLAT.PLYLoader.LoadAsync(url, tempScene, (p) => updateProgress(type, p * 100));
                 
                 const obj = tempScene.objects[0];
-                obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI, 0, 0));
+                obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
                 
                 objectsStore[key] = obj;
                 
@@ -154,7 +154,6 @@
             const firstObj = await loadModel(site, "asp");
             if (firstObj && currentSite === site) {
                 scene.addObject(firstObj);
-                fitCamera();
                 document.getElementById("btn-asp").classList.add('active');
                 document.getElementById("status-text").innerText = `SITE: ${site} READY`;
             }
@@ -170,16 +169,9 @@
 
             scene.reset();
             scene.addObject(obj);
-            fitCamera();
 
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-${type}`).classList.add('active');
-        }
-
-        function fitCamera() {
-            if (scene.objects.length > 0) {
-                controls.zoomTo(scene.objects[0], 2);
-            }
         }
 
         function updateProgress(type, percent) {
@@ -187,7 +179,7 @@
             if (btn) btn.style.setProperty('--progress', `${percent}%`);
         }
 
-            init();
+        init();
     </script>
 </body>
 </html>
