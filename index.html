@@ -18,36 +18,80 @@
             return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
         }
 
+        function updateProgress(type, percent) {
+            const btn = document.getElementById(`btn-${type}`);
+            if (btn) {
+                btn.style.setProperty('--progress', `${percent}%`);
+            }
+        }
+
+        async function fetchWithProgress(url, type) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.responseType = 'arraybuffer';
+                xhr.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        updateProgress(type, (e.loaded / e.total) * 100);
+                    }
+                };
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        updateProgress(type, 100);
+                        resolve(xhr.response);
+                    } else {
+                        reject();
+                    }
+                };
+                xhr.onerror = () => reject();
+                xhr.send();
+            });
+        }
+
         async function loadSingleModel(site, type) {
             const key = `${site}_${type}`;
-            if (scenes[key]) return scenes[key];
-
-            const scene = new SPLAT.Scene();
-            await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene);
-            
-            const obj = scene.objects[0];
-            if (obj && obj.data && obj.data.positions) {
-                const pos = obj.data.positions;
-                let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-                for (let i = 0; i < pos.length; i += 3) {
-                    minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
-                    minY = Math.min(minY, pos[i+1]); maxY = Math.max(maxY, pos[i+1]);
-                    minZ = Math.min(minZ, pos[i+2]); maxZ = Math.max(maxZ, pos[i+2]);
-                }
-                const cX = (minX + maxX) / 2, cY = (minY + maxY) / 2, cZ = (minZ + maxZ) / 2;
-                for (let i = 0; i < pos.length; i += 3) {
-                    pos[i] -= cX; pos[i+1] -= cY; pos[i+2] -= cZ;
-                }
+            if (scenes[key]) {
+                updateProgress(type, 100);
+                return scenes[key];
             }
-            obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
-            scenes[key] = scene;
-            return scene;
+
+            try {
+                const buffer = await fetchWithProgress(getUrl(site, type), type);
+                const scene = new SPLAT.Scene();
+                await SPLAT.PLYLoader.LoadAsync(buffer, scene);
+                
+                const obj = scene.objects[0];
+                if (obj && obj.data && obj.data.positions) {
+                    const pos = obj.data.positions;
+                    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+                    for (let i = 0; i < pos.length; i += 3) {
+                        minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
+                        minY = Math.min(minY, pos[i+1]); maxY = Math.max(maxY, pos[i+1]);
+                        minZ = Math.min(minZ, pos[i+2]); maxZ = Math.max(maxZ, pos[i+2]);
+                    }
+                    const cX = (minX + maxX) / 2, cY = (minY + maxY) / 2, cZ = (minZ + maxZ) / 2;
+                    for (let i = 0; i < pos.length; i += 3) {
+                        pos[i] -= cX; pos[i+1] -= cY; pos[i+2] -= cZ;
+                    }
+                }
+                obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
+                scenes[key] = scene;
+                return scene;
+            } catch (err) {
+                updateProgress(type, 0);
+            }
         }
 
         async function updateSite(site) {
             currentSite = site;
             document.getElementById("status-text").innerText = `Updating Site: ${site}`;
-            document.querySelectorAll('.nav-btn').forEach(b => { b.disabled = true; b.style.opacity = "0.3"; });
+            
+            ["asp", "step1", "step2"].forEach(t => {
+                const btn = document.getElementById(`btn-${t}`);
+                btn.disabled = true;
+                btn.style.opacity = "0.3";
+                btn.style.setProperty('--progress', '0%');
+            });
 
             const firstScene = await loadSingleModel(site, "asp");
             currentScene = firstScene;
@@ -123,11 +167,21 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .nav-btn {
+            position: relative;
             padding: 10px 22px; border: none; background: transparent;
             color: white; cursor: pointer; border-radius: 12px;
             font-weight: 600; font-size: 12px; transition: all 0.2s; opacity: 0.3;
+            overflow: hidden;
+            --progress: 0%;
         }
-        .nav-btn.active { background: #007aff; color: white; opacity: 1 !important; }
+        .nav-btn::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0;
+            height: 3px; width: var(--progress);
+            background: #007aff;
+            transition: width 0.1s ease-out;
+        }
+        .nav-btn.active { background: rgba(255, 255, 255, 0.1); color: white; opacity: 1 !important; }
         #status-bar { font-size: 9px; color: #444; text-transform: uppercase; letter-spacing: 1.5px; }
         canvas { display: block; width: 100vw; height: 100vh; }
     </style>
