@@ -1,143 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SatSplat: 3D Satellite Reconstruction</title>
-    <script type="module">
-        import * as SPLAT from "https://cdn.jsdelivr.net/npm/gsplat@latest";
-
-        let renderer, camera, controls;
-        let currentScene = null;
-        let currentSite = "068";
-        const scenes = {};
-
-        const SITES = ["068", "214", "251", "260"];
-        const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
-
-        function getUrl(site, type) {
-            const suffix = type === "asp" ? "asp" : `${type}_baked`;
-            return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
-        }
-
-        function updateProgress(type, percent) {
-            const btn = document.getElementById(`btn-${type}`);
-            if (btn) btn.style.setProperty('--progress', `${percent}%`);
-        }
-
-        async function fetchWithProgress(url, type) {
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', url);
-                xhr.responseType = 'arraybuffer';
-                xhr.onprogress = (e) => {
-                    if (e.lengthComputable) updateProgress(type, (e.loaded / e.total) * 100);
-                };
-                xhr.onload = () => {
-                    if (xhr.status === 200) {
-                        updateProgress(type, 100);
-                        resolve(xhr.response);
-                    } else reject();
-                };
-                xhr.onerror = () => reject();
-                xhr.send();
-            });
-        }
-
-        async function loadSingleModel(site, type) {
-            const key = `${site}_${type}`;
-            if (scenes[key]) {
-                updateProgress(type, 100);
-                return scenes[key];
-            }
-
-            try {
-                const buffer = await fetchWithProgress(getUrl(site, type), type);
-                const scene = new SPLAT.Scene();
-                const data = await SPLAT.LoaderUtils.ReadAsync(buffer);
-                await SPLAT.PLYLoader.LoadAsync(data, scene);
-                
-                const obj = scene.objects[0];
-                if (obj && obj.data && obj.data.positions) {
-                    const pos = obj.data.positions;
-                    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-                    for (let i = 0; i < pos.length; i += 3) {
-                        minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
-                        minY = Math.min(minY, pos[i+1]); maxY = Math.max(maxY, pos[i+1]);
-                        minZ = Math.min(minZ, pos[i+2]); maxZ = Math.max(maxZ, pos[i+2]);
-                    }
-                    const cX = (minX + maxX) / 2, cY = (minY + maxY) / 2, cZ = (minZ + maxZ) / 2;
-                    for (let i = 0; i < pos.length; i += 3) {
-                        pos[i] -= cX; pos[i+1] -= cY; pos[i+2] -= cZ;
-                    }
-                }
-                obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
-                scenes[key] = scene;
-                return scene;
-            } catch (err) {
-                updateProgress(type, 0);
-            }
-        }
-
-        async function updateSite(site) {
-            currentSite = site;
-            document.getElementById("status-text").innerText = `SITE: ${site} LOADING...`;
-            
-            ["asp", "step1", "step2"].forEach(t => {
-                const btn = document.getElementById(`btn-${t}`);
-                btn.disabled = true;
-                btn.style.opacity = "0.3";
-                btn.style.setProperty('--progress', '0%');
-            });
-
-            const firstScene = await loadSingleModel(site, "asp");
-            if (firstScene) {
-                currentScene = firstScene;
-                switchType("asp");
-                document.getElementById("btn-asp").disabled = false;
-                document.getElementById("btn-asp").style.opacity = "1";
-            }
-
-            ["step1", "step2"].forEach(async (type) => {
-                await loadSingleModel(site, type);
-                const btn = document.getElementById(`btn-${type}`);
-                btn.disabled = false;
-                btn.style.opacity = "1";
-                if(type === "step2") document.getElementById("status-text").innerText = `SITE ${site} READY`;
-            });
-        }
-
-        window.switchType = (type) => {
-            const key = `${currentSite}_${type}`;
-            if (!scenes[key]) return;
-            currentScene = scenes[key];
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${type}`).classList.add('active');
-        };
-
-        window.changeSite = (e) => updateSite(e.target.value);
-
-        async function main() {
-            const canvas = document.getElementById("mainCanvas");
-            renderer = new SPLAT.WebGLRenderer(canvas);
-            camera = new SPLAT.Camera();
-            controls = new SPLAT.OrbitControls(camera, canvas);
-            camera.position = new SPLAT.Vector3(2, -2, 2);
-            controls.setCameraTarget(new SPLAT.Vector3(0, 0, 0));
-
-            const resize = () => renderer.setSize(window.innerWidth, window.innerHeight, 1.0);
-            window.addEventListener("resize", resize);
-            resize();
-
-            const frame = () => {
-                controls.update();
-                if (currentScene) renderer.render(currentScene, camera);
-                requestAnimationFrame(frame);
-            };
-            requestAnimationFrame(frame);
-            updateSite("068");
-        }
-        main();
-    </script>
     <style>
         body { margin: 0; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
         #header {
@@ -197,7 +63,7 @@
                 <p class="subtitle">Traditional to Modern Methods</p>
                 <p class="workflow">ASP → SatSplat → Diffusion</p>
             </div>
-            <select id="site-selector" onchange="changeSite(event)">
+            <select id="site-selector">
                 <option value="068">JAX_068</option>
                 <option value="214">JAX_214</option>
                 <option value="251">JAX_251</option>
@@ -208,13 +74,145 @@
 
     <div id="nav-container">
         <div id="nav-bar">
-            <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
-            <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
-            <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">Diffusion</button>
+            <button id="btn-asp" class="nav-btn">ASP</button>
+            <button id="btn-step1" class="nav-btn">SatSplat</button>
+            <button id="btn-step2" class="nav-btn">Diffusion</button>
         </div>
         <div id="status-bar"><span id="status-text">CONNECTING...</span></div>
     </div>
 
     <canvas id="mainCanvas"></canvas>
+
+    <script type="module">
+        import * as SPLAT from "https://cdn.jsdelivr.net/npm/gsplat@latest";
+
+        let renderer, camera, controls;
+        let currentScene = null;
+        let currentSite = "068";
+        const scenes = {};
+        const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
+
+        function getUrl(site, type) {
+            const suffix = type === "asp" ? "asp" : `${type}_baked`;
+            return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
+        }
+
+        function updateProgress(type, percent) {
+            const btn = document.getElementById(`btn-${type}`);
+            if (btn) btn.style.setProperty('--progress', `${percent}%`);
+        }
+
+        async function fetchWithProgress(url, type) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url);
+                xhr.responseType = 'arraybuffer';
+                xhr.onprogress = (e) => {
+                    if (e.lengthComputable) updateProgress(type, (e.loaded / e.total) * 100);
+                };
+                xhr.onload = () => xhr.status === 200 ? resolve(xhr.response) : reject();
+                xhr.onerror = reject;
+                xhr.send();
+            });
+        }
+
+        async function loadSingleModel(site, type) {
+            const key = `${site}_${type}`;
+            if (scenes[key]) return scenes[key];
+            try {
+                const buffer = await fetchWithProgress(getUrl(site, type), type);
+                const scene = new SPLAT.Scene();
+                const data = await SPLAT.LoaderUtils.ReadAsync(buffer);
+                await SPLAT.PLYLoader.LoadAsync(data, scene);
+                
+                const obj = scene.objects[0];
+                if (obj?.data?.positions) {
+                    const pos = obj.data.positions;
+                    let min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+                    for (let i = 0; i < pos.length; i += 3) {
+                        for (let j = 0; j < 3; j++) {
+                            min[j] = Math.min(min[j], pos[i+j]);
+                            max[j] = Math.max(max[j], pos[i+j]);
+                        }
+                    }
+                    const center = min.map((v, i) => (v + max[i]) / 2);
+                    for (let i = 0; i < pos.length; i += 3) {
+                        for (let j = 0; j < 3; j++) pos[i+j] -= center[j];
+                    }
+                }
+                obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
+                scenes[key] = scene;
+                return scene;
+            } catch (err) {
+                updateProgress(type, 0);
+                return null;
+            }
+        }
+
+        async function updateSite(site) {
+            currentSite = site;
+            document.getElementById("status-text").innerText = `SITE: ${site} LOADING...`;
+            ["asp", "step1", "step2"].forEach(t => {
+                const btn = document.getElementById(`btn-${t}`);
+                btn.disabled = true;
+                btn.style.opacity = "0.3";
+                btn.style.setProperty('--progress', '0%');
+                btn.classList.remove('active');
+            });
+
+            const firstScene = await loadSingleModel(site, "asp");
+            if (firstScene && currentSite === site) {
+                currentScene = firstScene;
+                document.getElementById("btn-asp").classList.add('active');
+                document.getElementById("btn-asp").disabled = false;
+                document.getElementById("btn-asp").style.opacity = "1";
+            }
+
+            ["step1", "step2"].forEach(async (type) => {
+                await loadSingleModel(site, type);
+                if (currentSite === site) {
+                    const btn = document.getElementById(`btn-${type}`);
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                    if(type === "step2") document.getElementById("status-text").innerText = `SITE ${site} READY`;
+                }
+            });
+        }
+
+        const switchType = (type) => {
+            const key = `${currentSite}_${type}`;
+            if (!scenes[key]) return;
+            currentScene = scenes[key];
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${type}`).classList.add('active');
+        };
+
+        async function init() {
+            const canvas = document.getElementById("mainCanvas");
+            renderer = new SPLAT.WebGLRenderer(canvas);
+            camera = new SPLAT.Camera();
+            controls = new SPLAT.OrbitControls(camera, canvas);
+            camera.position = new SPLAT.Vector3(2, -2, 2);
+            
+            window.addEventListener("resize", () => renderer.setSize(window.innerWidth, window.innerHeight));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            document.getElementById("site-selector").addEventListener("change", (e) => updateSite(e.target.value));
+            document.getElementById("btn-asp").addEventListener("click", () => switchType("asp"));
+            document.getElementById("btn-step1").addEventListener("click", () => switchType("step1"));
+            document.getElementById("btn-step2").addEventListener("click", () => switchType("step2"));
+
+            const frame = () => {
+                controls.update();
+                if (currentScene) renderer.render(currentScene, camera);
+                requestAnimationFrame(frame);
+            };
+            requestAnimationFrame(frame);
+            updateSite("068");
+        }
+
+        if (document.readyState === 'complete') init();
+        else window.addEventListener('load', init);
+    </script>
 </body>
 </html>
