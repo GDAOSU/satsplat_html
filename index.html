@@ -48,7 +48,6 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        /* 하단 버튼 스타일 수정: 흰색 배경 */
         .nav-btn {
             position: relative; 
             padding: 10px 30px; 
@@ -75,7 +74,7 @@
         .nav-btn.active { 
             background: #ffffff; 
             opacity: 1 !important; 
-            color: #007aff; /* 활성화 시 텍스트 파란색 */
+            color: #007aff;
             box-shadow: 0 0 15px rgba(0, 122, 255, 0.4);
         }
 
@@ -88,7 +87,7 @@
         <div>
             <h1>3D Satellite Reconstruction</h1>
             <p class="subtitle">Traditional Pipeline to Modern Methods</p>
-            <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; Ours (Step 1) &nbsp; → &nbsp; Ours (Step 2)</p>
+            <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
         </div>
         <select id="site-selector" onchange="changeSite(event)">
             <option value="068">JAX_068</option>
