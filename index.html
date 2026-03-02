@@ -88,6 +88,8 @@
             camera = new SPLAT.Camera();
             controls = new SPLAT.OrbitControls(camera, canvas);
             scene = new SPLAT.Scene();
+            camera.position = new SPLAT.Vector3(1.5, -0.8, 0.5);
+            controls.setCameraTarget(new SPLAT.Vector3(0, 0, 0));
 
             window.addEventListener("resize", () => renderer.setSize(window.innerWidth, window.innerHeight));
 
