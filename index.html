@@ -30,9 +30,9 @@
             max-width: 95%;
         }
         .nav-btn {
-            position: relative; padding: 14px 20px; border: none; background: transparent;
+            position: relative; padding: 14px 16px; border: none; background: transparent;
             color: white; cursor: pointer; border-radius: 14px;
-            font-weight: 700; font-size: 0.95rem; transition: all 0.2s; opacity: 0.3;
+            font-weight: 700; font-size: 0.85rem; transition: all 0.2s; opacity: 0.3;
             overflow: hidden; flex: 1; white-space: nowrap;
             --progress: 0%;
         }
@@ -52,7 +52,7 @@
             <div>
                 <h1>3D Satellite Recon</h1>
                 <p class="subtitle">Traditional to Modern Methods</p>
-                <p class="workflow">ASP → SatSplat → Diffusion</p>
+                <p class="workflow">ASP → Skyfall → Ours (Step 1) → Ours (Step 2)</p>
             </div>
             <select id="site-selector">
                 <option value="068">JAX_068</option>
@@ -66,8 +66,9 @@
     <div id="nav-container">
         <div id="nav-bar">
             <button id="btn-asp" class="nav-btn">ASP</button>
-            <button id="btn-step1" class="nav-btn">SatSplat</button>
-            <button id="btn-step2" class="nav-btn">Diffusion</button>
+            <button id="btn-skyfall" class="nav-btn">Skyfall-GS</button>
+            <button id="btn-step1" class="nav-btn">Ours (Step 1)</button>
+            <button id="btn-step2" class="nav-btn">Ours (Step 2)</button>
         </div>
         <div id="status-bar"><span id="status-text">CONNECTING...</span></div>
     </div>
@@ -95,6 +96,7 @@
 
             document.getElementById("site-selector").addEventListener("change", (e) => updateSite(e.target.value));
             document.getElementById("btn-asp").addEventListener("click", () => switchType("asp"));
+            document.getElementById("btn-skyfall").addEventListener("click", () => switchType("skyfall"));
             document.getElementById("btn-step1").addEventListener("click", () => switchType("step1"));
             document.getElementById("btn-step2").addEventListener("click", () => switchType("step2"));
 
@@ -112,7 +114,11 @@
             const key = `${site}_${type}`;
             if (objectsStore[key]) return objectsStore[key];
 
-            const suffix = type === "asp" ? "asp" : `${type}_baked`;
+            let suffix;
+            if (type === "asp") suffix = "asp";
+            else if (type === "skyfall") suffix = "skyfallgs";
+            else suffix = `${type}_baked`;
+
             const url = `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
 
             try {
@@ -141,7 +147,7 @@
             currentSite = site;
             document.getElementById("status-text").innerText = `SITE: ${site} LOADING...`;
             
-            ["asp", "step1", "step2"].forEach(t => {
+            ["asp", "skyfall", "step1", "step2"].forEach(t => {
                 const btn = document.getElementById(`btn-${t}`);
                 btn.disabled = true;
                 btn.style.opacity = "0.3";
@@ -158,6 +164,7 @@
                 document.getElementById("status-text").innerText = `SITE: ${site} READY`;
             }
 
+            loadModel(site, "skyfall");
             loadModel(site, "step1");
             loadModel(site, "step2");
         }
