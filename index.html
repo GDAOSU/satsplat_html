@@ -2,112 +2,162 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SatSplat: 3D Satellite Reconstruction</title>
     <style>
-        body { margin: 0; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
-        #header {
-            position: absolute; top: 0; left: 0; right: 0;
-            padding: 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
-            z-index: 100; display: flex; justify-content: space-between; align-items: flex-start;
-        }
-        h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
-        .subtitle { margin: 4px 0 0; font-size: 0.8rem; color: #aaa; letter-spacing: 0.5px; }
-        .workflow { margin-top: 8px; font-size: 0.75rem; color: #007aff; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        
-        #site-selector {
-            background: #ffffff; 
-            color: #000000; 
-            border: none;
-            padding: 10px 35px 10px 15px;
-            border-radius: 8px; 
-            font-size: 13px; 
-            font-weight: 700;
-            outline: none; 
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        :root {
+            --primary-color: #007aff;
+            --bg-color: #ffffff;
+            --text-color: #1d1d1f;
+            --secondary-bg: #f5f5f7;
         }
 
-        #site-selector option {
-            background: #ffffff;
-            color: #000000;
+        body { 
+            margin: 0; 
+            background: var(--bg-color); 
+            font-family: -apple-system, system-ui, sans-serif; 
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-y: auto;
         }
 
-        #nav-container {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; z-index: 100;
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 20px;
         }
-        #nav-bar {
-            display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px); padding: 10px; border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .nav-btn {
-            position: relative; 
-            padding: 10px 30px; 
-            border: none; 
-            background: #ffffff;
-            color: #000000; 
-            cursor: pointer; 
-            border-radius: 12px;
-            font-weight: 700; 
-            font-size: 11px; 
-            transition: all 0.2s; 
-            opacity: 0.4;
-            white-space: nowrap; 
+
+        header { text-align: center; margin-bottom: 50px; }
+        h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -1px; }
+        .authors { font-size: 1.1rem; color: var(--primary-color); margin-bottom: 20px; }
+        .affiliations { color: #86868b; font-size: 0.9rem; }
+
+        .section { margin-bottom: 60px; }
+        .section h2 { font-size: 1.8rem; border-bottom: 2px solid var(--secondary-bg); padding-bottom: 10px; margin-bottom: 20px; }
+        .description-text { font-size: 1.1rem; color: #424245; text-align: justify; }
+
+        .viewer-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: var(--secondary-bg);
+            border-radius: 24px;
             overflow: hidden;
-            --progress: 0%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        
-        .nav-btn::before {
-            content: ""; position: absolute; bottom: 0; left: 0; height: 3px;
-            width: var(--progress); background: #007aff; transition: width 0.1s ease;
-        }
-        
-        .nav-btn.active { 
-            background: #ffffff; 
-            opacity: 1 !important; 
-            color: #007aff;
-            box-shadow: 0 0 15px rgba(0, 122, 255, 0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 40px 0;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        #status-bar { font-size: 9px; color: #777; text-transform: uppercase; letter-spacing: 1.5px; }
-        canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+        .viewer-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .viewer-controls { pointer-events: auto; }
+
+        #site-selector {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .viewer-nav {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(20px);
+            padding: 6px;
+            border-radius: 100px;
+            display: flex;
+            gap: 5px;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .nav-btn {
+            border: none;
+            background: transparent;
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #86868b;
+        }
+
+        .nav-btn.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        canvas { width: 100% !important; height: 100% !important; display: block; outline: none; }
+        
+        #status-text { font-size: 10px; color: #86868b; text-align: center; margin-top: 10px; display: block; text-transform: uppercase;}
     </style>
 </head>
 <body>
-    <div id="header">
-        <div>
-            <h1>3D Satellite Reconstruction</h1>
-            <p class="subtitle">Traditional Pipeline to Modern Methods</p>
-            <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
-        </div>
-        <select id="site-selector" onchange="changeSite(event)">
-            <option value="068">JAX_068</option>
-            <option value="214">JAX_214</option>
-            <option value="251">JAX_251</option>
-            <option value="260">JAX_260</option>
-        </select>
-    </div>
 
-    <div id="nav-container">
-        <div id="nav-bar">
-            <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
-            <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS</button>
-            <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
-            <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion</button>
-        </div>
-        <div id="status-bar"><span id="status-text">Connecting...</span></div>
-    </div>
+    <div class="container">
+        <header>
+            <h1>SatSplat</h1>
+            <p class="authors">Jiyong et al.</p>
+            <p class="affiliations">Satellite Remote Sensing & Computer Vision Group</p>
+        </header>
 
-    <canvas id="mainCanvas"></canvas>
+        <div class="section">
+            <h2>Abstract</h2>
+            <p class="description-text">
+                We present <b>SatSplat</b>, a novel framework for large-scale 3D satellite reconstruction. By integrating neural rendering with generative diffusion models, our approach overcomes the limitations of traditional stereo pipelines. SatSplat achieves high-fidelity geometry and realistic texture synthesis from multi-view satellite imagery.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>Interactive Results</h2>
+            <div class="viewer-container">
+                <div class="viewer-overlay">
+                    <div class="viewer-controls">
+                        <select id="site-selector" onchange="changeSite(event)">
+                            <option value="068">JAX_068</option>
+                            <option value="214">JAX_214</option>
+                            <option value="251">JAX_251</option>
+                            <option value="260">JAX_260</option>
+                        </select>
+                    </div>
+                </div>
+
+                <canvas id="mainCanvas"></canvas>
+
+                <div class="viewer-nav">
+                    <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
+                    <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS</button>
+                    <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
+                    <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">Diffusion Refinement</button>
+                </div>
+            </div>
+            <span id="status-text">Ready</span>
+        </div>
+
+        <div class="section">
+            <h2>Methodology</h2>
+            <p class="description-text">
+                The pipeline consists of two primary stages. First, we optimize Gaussian Splatting for satellite geometry. Second, we apply a generative refinement process to recover fine-grained details and consistent illumination.
+            </p>
+        </div>
+    </div>
 
     <script type="module">
         import * as SPLAT from "https://cdn.jsdelivr.net/npm/gsplat@latest";
@@ -118,28 +168,19 @@
         const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
 
         function getUrl(site, type) {
-            let suffix;
-            if (type === "asp") suffix = "asp";
-            else if (type === "skyfall") suffix = "skyfallgs";
-            else suffix = `${type}_baked`;
+            let suffix = (type === "asp") ? "asp" : (type === "skyfall") ? "skyfallgs" : `${type}_baked`;
             return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
-        }
-
-        function updateProgress(type, percent) {
-            const btn = document.getElementById(`btn-${type}`);
-            if (btn) btn.style.setProperty('--progress', `${percent}%`);
         }
 
         async function loadSingleModel(site, type) {
             const key = `${site}_${type}`;
-            if (scenes[key]) {
-                updateProgress(type, 100);
-                return scenes[key];
-            }
-
+            if (scenes[key]) return scenes[key];
             const scene = new SPLAT.Scene();
-            await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (p) => updateProgress(type, p * 100));
-            
+            await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (p) => {
+                if(document.getElementById(`btn-${type}`).classList.contains('active')) {
+                    document.getElementById("status-text").innerText = `Loading: ${Math.round(p * 100)}%`;
+                }
+            });
             const obj = scene.objects[0];
             if (obj && obj.data && obj.data.positions) {
                 const pos = obj.data.positions;
@@ -161,33 +202,15 @@
 
         async function updateSite(site) {
             currentSite = site;
-            document.getElementById("status-text").innerText = `Updating Site: ${site}`;
-            document.querySelectorAll('.nav-btn').forEach(b => { 
-                b.disabled = true; 
-                b.style.opacity = "0.2"; 
-                b.style.setProperty('--progress', '0%');
-            });
-
+            document.getElementById("status-text").innerText = `Connecting Site ${site}...`;
             const firstScene = await loadSingleModel(site, "asp");
             if (currentSite === site) {
                 currentScene = firstScene;
                 switchType("asp");
-                document.getElementById("btn-asp").disabled = false;
-                document.getElementById("btn-asp").style.opacity = "1";
             }
-
-            const types = ["skyfall", "step1", "step2"];
-            for (const type of types) {
-                await loadSingleModel(site, type);
-                if (currentSite === site) {
-                    const btn = document.getElementById(`btn-${type}`);
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.style.opacity = "1";
-                    }
-                }
+            for (const type of ["skyfall", "step1", "step2"]) {
+                loadSingleModel(site, type);
             }
-            document.getElementById("status-text").innerText = `Site ${site} Ready`;
         }
 
         window.switchType = (type) => {
@@ -196,19 +219,28 @@
             currentScene = scenes[key];
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${type}`).classList.add('active');
+            document.getElementById("status-text").innerText = `${type.toUpperCase()} Active`;
         };
 
         window.changeSite = (e) => updateSite(e.target.value);
 
         async function main() {
             const canvas = document.getElementById("mainCanvas");
-            renderer = new SPLAT.WebGLRenderer(canvas);
+            const container = document.querySelector('.viewer-container');
+            
+            renderer = new SPLAT.WebGLRenderer(canvas, { alpha: true });
+            renderer.setClearColor(new SPLAT.Color(0,0,0), 0); 
+            
             camera = new SPLAT.Camera();
             controls = new SPLAT.OrbitControls(camera, canvas);
-            camera.position = new SPLAT.Vector3(1.5, -0.8, 0.5);
+            camera.position = new SPLAT.Vector3(2, -1.2, 1);
             controls.setCameraTarget(new SPLAT.Vector3(0, 0, 0));
 
-            const resize = () => renderer.setSize(window.innerWidth, window.innerHeight, 1.0);
+            const resize = () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                renderer.setSize(w, h);
+            };
             window.addEventListener("resize", resize);
             resize();
 
