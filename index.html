@@ -9,47 +9,43 @@
         
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 30px 40px; /* 패딩 증가 */
-            background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%);
+            padding: 25px 35px; 
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        /* 왼쪽 영역: 가시성 대폭 강화 */
-        .header-left { display: flex; flex-direction: column; gap: 8px; }
-        h1 { margin: 0; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; color: #fff; } /* 제목 크기 증가 */
-        .subtitle { margin: 0; font-size: 1.1rem; color: #ccc; font-weight: 400; } /* 부제 크기 증가 */
+        .header-left { display: flex; flex-direction: column; gap: 2px; }
+        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; } 
+        .subtitle { margin: 0; font-size: 0.95rem; color: #bbb; font-weight: 400; opacity: 0.8; } 
         
-        /* 저자 및 소속 강조 */
-        .authors { margin-top: 15px; font-size: 1.2rem; color: #fff; font-weight: 700; } /* 저자 이름 크기 및 두께 증가 */
-        .authors span { margin-right: 20px; white-space: nowrap; border-bottom: 2px solid rgba(0,122,255,0.5); padding-bottom: 2px; }
-        .affiliation { margin-top: 8px; font-size: 1.0rem; color: #aaa; font-weight: 500; } /* 소속 크기 증가 */
+        .authors { margin-top: 12px; font-size: 1.05rem; color: #fff; font-weight: 600; } 
+        .authors span { margin-right: 15px; white-space: nowrap; }
+        .affiliation { margin-top: 4px; font-size: 0.85rem; color: #999; font-weight: 400; } 
 
-        .workflow { margin-top: 15px; font-size: 0.9rem; color: #007aff; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; background: rgba(0,122,255,0.1); padding: 5px 12px; border-radius: 6px; align-self: flex-start; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
         
-        /* 오른쪽 영역: 로고 크기 및 선택기 가시성 */
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
-        
-        .logo-container { display: flex; gap: 25px; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 12px; }
-        .logo-container img { height: 50px; width: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); } /* 로고 크기 증가 및 그림자 추가 */
+        .logo-container { display: flex; gap: 18px; align-items: center; padding: 5px 0; }
+        .logo-container img { height: 42px; width: auto; opacity: 0.95; } /* 로고 크기 적정화 */
 
         #site-selector {
             background: #ffffff; color: #000000; border: none;
-            padding: 12px 45px 12px 20px; border-radius: 10px; font-size: 16px; font-weight: 800; /* 폰트 크기 증가 */
+            padding: 10px 35px 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 700;
             outline: none; cursor: pointer; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 15px center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.2s;
         }
+        #site-selector:hover { transform: translateY(-1px); }
 
-        /* 하단 내비게이션 버튼 가시성 강화 */
-        #nav-container { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; z-index: 100; }
-        #nav-bar { display: flex; gap: 15px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(25px); padding: 15px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.2); }
+        #nav-container { position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; z-index: 100; }
+        #nav-bar { display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); padding: 12px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15); }
         
-        .nav-btn { position: relative; padding: 15px 40px; border: none; background: #333; color: #fff; cursor: pointer; border-radius: 15px; font-weight: 800; font-size: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.5; --progress: 0%; }
-        .nav-btn.active { background: #fff; opacity: 1 !important; color: #007aff; transform: scale(1.05); box-shadow: 0 10px 25px rgba(0, 122, 255, 0.5); }
+        .nav-btn { position: relative; padding: 12px 35px; border: none; background: #fff; color: #000; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 12px; transition: all 0.2s; opacity: 0.4; --progress: 0%; }
+        .nav-btn.active { opacity: 1 !important; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
         
-        #status-bar { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+        #status-bar { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 500; }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
@@ -57,7 +53,7 @@
     <div id="header">
         <div class="header-left">
             <h1>SatSplat: 3D Satellite Reconstruction</h1>
-            <p class="subtitle">From Traditional Pipelines to Diffusion-based Refinement</p>
+            <p class="subtitle">Traditional Pipeline to Modern Methods</p>
             
             <div class="authors">
                 <span>Rongjun Qin</span>
@@ -67,14 +63,12 @@
             <div class="affiliation">
                 Geospatial Data Analytics Lab (GDA), The Ohio State University
             </div>
-
-            <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
         </div>
 
         <div class="header-right">
             <div class="logo-container">
                 <img src="TheOhioStateUniversity-REV2-Horiz-RGBHEX.png" alt="OSU Logo">
-                <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" style="height: 55px;">
+                <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" style="height: 45px;">
             </div>
             
             <select id="site-selector" onchange="changeSite(event)">
@@ -93,7 +87,7 @@
             <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
             <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion</button>
         </div>
-        <div id="status-bar"><span id="status-text">SYSTEM READY</span></div>
+        <div id="status-bar"><span id="status-text">System Ready</span></div>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -155,7 +149,7 @@
 
         async function updateSite(site) {
             currentSite = site;
-            document.getElementById("status-text").innerText = `LOADING SITE: ${site}`;
+            document.getElementById("status-text").innerText = `Updating Site: ${site}`;
             document.querySelectorAll('.nav-btn').forEach(b => { 
                 b.disabled = true; 
                 b.style.opacity = "0.2"; 
@@ -178,11 +172,11 @@
                     const btn = document.getElementById(`btn-${type}`);
                     if (btn) {
                         btn.disabled = false;
-                        btn.style.opacity = "0.5";
+                        btn.style.opacity = "1";
                     }
                 }
             }
-            document.getElementById("status-text").innerText = `SITE ${site} LOADED`;
+            document.getElementById("status-text").innerText = `Site ${site} Ready`;
         }
 
         window.switchType = (type) => {
