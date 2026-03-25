@@ -9,59 +9,58 @@
         
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 35px 45px; 
+            padding: 30px 40px; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        .header-left { display: flex; flex-direction: column; gap: 4px; }
-        h1 { margin: 0; font-size: 2.2rem; font-weight: 900; letter-spacing: -0.8px; color: #ffffff; text-shadow: 0 2px 15px rgba(0,0,0,0.6); } 
-        .subtitle { margin: 0; font-size: 1.1rem; color: #ffffff; font-weight: 500; opacity: 0.8; } 
-        
-        .authors { margin-top: 18px; font-size: 1.2rem; color: #ffffff; font-weight: 700; } 
-        .authors span { margin-right: 20px; white-space: nowrap; }
-        
-        .affiliation { margin-top: 8px; font-size: 1.05rem; color: #ffffff; font-weight: 600; letter-spacing: 0.2px; text-shadow: 0 1px 8px rgba(0,0,0,0.9); } 
+        .header-left { display: flex; flex-direction: column; gap: 5px; }
+        h1 { margin: 0; font-size: 2.0rem; font-weight: 900; letter-spacing: -0.8px; color: #ffffff; } 
+        .subtitle { margin: 0; font-size: 1.0rem; color: #bbb; font-weight: 400; } 
+        .workflow { margin-top: 10px; font-size: 0.85rem; color: #007aff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; }
-        .logo-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
-        .logo-stack img.osu { height: 35px; width: auto; }
-        .logo-stack img.gda { height: 55px; width: auto; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 12px; }
+        
+        .authors { font-size: 1.1rem; color: #ffffff; font-weight: 700; line-height: 1.4; } 
+        .authors span { display: block; } 
+        
+        .affiliation { font-size: 0.9rem; color: #eee; font-weight: 600; opacity: 0.9; max-width: 300px; } 
+
+        .logo-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; margin-top: 5px; }
+        .logo-stack img.osu { height: 32px; width: auto; }
+        .logo-stack img.gda { height: 50px; width: auto; }
 
         #nav-container { 
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); 
             display: flex; flex-direction: column; align-items: center; gap: 15px; width: auto; z-index: 100; 
         }
         
         .controls-wrapper {
-            display: flex; align-items: center; gap: 20px; 
-            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(30px); 
-            padding: 12px 20px; border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            display: flex; align-items: center; gap: 15px; 
+            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(25px); 
+            padding: 10px 15px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
-        #nav-bar { display: flex; gap: 12px; }
+        #nav-bar { display: flex; gap: 10px; }
         
         .nav-btn { 
-            position: relative; padding: 14px 28px; border: none; background: rgba(255,255,255,0.1); 
-            color: #fff; cursor: pointer; border-radius: 16px; font-weight: 800; font-size: 12px; 
+            position: relative; padding: 12px 25px; border: none; background: rgba(255,255,255,0.1); 
+            color: #fff; cursor: pointer; border-radius: 14px; font-weight: 800; font-size: 11px; 
             transition: all 0.2s; opacity: 0.5; white-space: nowrap;
         }
-        .nav-btn.active { background: #fff; opacity: 1; color: #007aff; box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4); }
+        .nav-btn.active { background: #fff; opacity: 1; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
 
-        /* 사이트 선택기: 하단으로 이동 및 디자인 강조 */
         #site-selector {
             background: #007aff; color: #ffffff; border: none;
-            padding: 12px 40px 12px 18px; border-radius: 16px; font-size: 14px; font-weight: 900;
+            padding: 10px 35px 10px 15px; border-radius: 14px; font-size: 13px; font-weight: 900;
             outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 15px center;
-            transition: all 0.2s;
+            background-repeat: no-repeat; background-position: right 12px center;
         }
-        #site-selector:hover { background: #005bb5; transform: scale(1.02); }
 
-        #status-bar { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+        #status-bar { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
@@ -70,18 +69,18 @@
         <div class="header-left">
             <h1>SatSplat: 3D Satellite Reconstruction</h1>
             <p class="subtitle">Traditional Pipeline to Modern Methods</p>
-            
+            <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
+        </div>
+
+        <div class="header-right">
             <div class="authors">
                 <span>Rongjun Qin</span>
                 <span>Shuang Song</span>
                 <span>Jiyong Kim</span>
             </div>
             <div class="affiliation">
-                Geospatial Data Analytics Lab (GDA), The Ohio State University
+                Geospatial Data Analytics Lab (GDA)<br>The Ohio State University
             </div>
-        </div>
-
-        <div class="header-right">
             <div class="logo-stack">
                 <img src="TheOhioStateUniversity-REV2-Horiz-RGBHEX.png" alt="OSU Logo" class="osu">
                 <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" class="gda">
@@ -102,10 +101,10 @@
                 <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
                 <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS</button>
                 <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
-                <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion</button>
+                <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">Diffusion</button>
             </div>
         </div>
-        <div id="status-bar"><span id="status-text">SYSTEM READY</span></div>
+        <div id="status-bar"><span id="status-text">System Ready</span></div>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -179,11 +178,11 @@
                     const btn = document.getElementById(`btn-${type}`);
                     if (btn) {
                         btn.disabled = false;
-                        btn.style.opacity = "0.5";
+                        btn.style.opacity = "0.6";
                     }
                 }
             }
-            document.getElementById("status-text").innerText = `SITE ${site} LOADED`;
+            document.getElementById("status-text").innerText = `SITE ${site} READY`;
         }
 
         window.switchType = (type) => {
