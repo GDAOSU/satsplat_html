@@ -9,43 +9,57 @@
         
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 25px 35px; 
+            padding: 30px 40px; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        .header-left { display: flex; flex-direction: column; gap: 2px; }
-        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #fff; } 
-        .subtitle { margin: 0; font-size: 0.95rem; color: #bbb; font-weight: 400; opacity: 0.8; } 
+        .header-left { display: flex; flex-direction: column; gap: 4px; }
+        h1 { margin: 0; font-size: 2.0rem; font-weight: 900; letter-spacing: -0.8px; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); } 
+        .subtitle { margin: 0; font-size: 1.0rem; color: #ffffff; font-weight: 500; opacity: 0.7; } 
         
-        .authors { margin-top: 12px; font-size: 1.05rem; color: #fff; font-weight: 600; } 
-        .authors span { margin-right: 15px; white-space: nowrap; }
-        .affiliation { margin-top: 4px; font-size: 0.85rem; color: #999; font-weight: 400; } 
+        .authors { margin-top: 15px; font-size: 1.1rem; color: #ffffff; font-weight: 700; } 
+        .authors span { margin-right: 18px; white-space: nowrap; }
+        .affiliation { margin-top: 6px; font-size: 0.95rem; color: #eeeeee; font-weight: 600; letter-spacing: 0.3px; text-shadow: 0 1px 5px rgba(0,0,0,0.8); } 
 
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; }
+        .logo-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+        .logo-stack img.osu { height: 30px; width: auto; } /* 길쭉한 OSU 로고 */
+        .logo-stack img.gda { height: 45px; width: auto; } /* 정사각형 GDA 로고 */
+
+        #nav-container { 
+            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); 
+            display: flex; flex-direction: column; align-items: center; gap: 15px; width: auto; z-index: 100; 
+        }
         
-        .logo-container { display: flex; gap: 18px; align-items: center; padding: 5px 0; }
-        .logo-container img { height: 42px; width: auto; opacity: 0.95; } /* 로고 크기 적정화 */
+        .controls-wrapper {
+            display: flex; align-items: center; gap: 15px; 
+            background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(25px); 
+            padding: 10px 15px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        #nav-bar { display: flex; gap: 10px; }
+        
+        .nav-btn { 
+            position: relative; padding: 12px 25px; border: none; background: rgba(255,255,255,0.1); 
+            color: #fff; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 11px; 
+            transition: all 0.2s; opacity: 0.6; white-space: nowrap;
+        }
+        .nav-btn.active { background: #fff; opacity: 1; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
 
         #site-selector {
-            background: #ffffff; color: #000000; border: none;
-            padding: 10px 35px 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 700;
-            outline: none; cursor: pointer; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+            background: #007aff; color: #ffffff; border: none;
+            padding: 10px 35px 10px 15px; border-radius: 14px; font-size: 13px; font-weight: 800;
+            outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 12px center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
             transition: all 0.2s;
         }
-        #site-selector:hover { transform: translateY(-1px); }
+        #site-selector:hover { background: #005bb5; }
 
-        #nav-container { position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; z-index: 100; }
-        #nav-bar { display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); padding: 12px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15); }
-        
-        .nav-btn { position: relative; padding: 12px 35px; border: none; background: #fff; color: #000; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 12px; transition: all 0.2s; opacity: 0.4; --progress: 0%; }
-        .nav-btn.active { opacity: 1 !important; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
-        
-        #status-bar { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 500; }
+        #status-bar { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
@@ -53,7 +67,7 @@
     <div id="header">
         <div class="header-left">
             <h1>SatSplat: 3D Satellite Reconstruction</h1>
-            <p class="subtitle">Traditional Pipeline to Modern Methods</p>
+            <p class="subtitle">From Traditional Pipelines to Diffusion-based Refinement</p>
             
             <div class="authors">
                 <span>Rongjun Qin</span>
@@ -66,26 +80,28 @@
         </div>
 
         <div class="header-right">
-            <div class="logo-container">
-                <img src="TheOhioStateUniversity-REV2-Horiz-RGBHEX.png" alt="OSU Logo">
-                <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" style="height: 45px;">
+            <div class="logo-stack">
+                <img src="TheOhioStateUniversity-REV2-Horiz-RGBHEX.png" alt="OSU Logo" class="osu">
+                <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" class="gda">
             </div>
-            
-            <select id="site-selector" onchange="changeSite(event)">
-                <option value="068">JAX_068</option>
-                <option value="214">JAX_214</option>
-                <option value="251">JAX_251</option>
-                <option value="260">JAX_260</option>
-            </select>
         </div>
     </div>
 
     <div id="nav-container">
-        <div id="nav-bar">
-            <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
-            <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS</button>
-            <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
-            <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion</button>
+        <div class="controls-wrapper">
+            <select id="site-selector" onchange="changeSite(event)">
+                <option value="068">SITE: JAX_068</option>
+                <option value="214">SITE: JAX_214</option>
+                <option value="251">SITE: JAX_251</option>
+                <option value="260">SITE: JAX_260</option>
+            </select>
+
+            <div id="nav-bar">
+                <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
+                <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS</button>
+                <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
+                <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">Diffusion</button>
+            </div>
         </div>
         <div id="status-bar"><span id="status-text">System Ready</span></div>
     </div>
@@ -108,22 +124,13 @@
             return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
         }
 
-        function updateProgress(type, percent) {
-            const btn = document.getElementById(`btn-${type}`);
-            if (btn) btn.style.setProperty('--progress', `${percent}%`);
-        }
-
         async function loadSingleModel(site, type) {
             const key = `${site}_${type}`;
-            if (scenes[key]) {
-                updateProgress(type, 100);
-                return scenes[key];
-            }
+            if (scenes[key]) return scenes[key];
 
             const scene = new SPLAT.Scene();
             try {
-                await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (p) => updateProgress(type, p * 100));
-                
+                await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene);
                 const obj = scene.objects[0];
                 if (obj && obj.data && obj.data.positions) {
                     const pos = obj.data.positions;
@@ -149,12 +156,10 @@
 
         async function updateSite(site) {
             currentSite = site;
-            document.getElementById("status-text").innerText = `Updating Site: ${site}`;
+            document.getElementById("status-text").innerText = `LOADING: ${site}`;
             document.querySelectorAll('.nav-btn').forEach(b => { 
                 b.disabled = true; 
                 b.style.opacity = "0.2"; 
-                b.style.setProperty('--progress', '0%');
-                b.classList.remove('active');
             });
 
             const firstScene = await loadSingleModel(site, "asp");
@@ -172,11 +177,11 @@
                     const btn = document.getElementById(`btn-${type}`);
                     if (btn) {
                         btn.disabled = false;
-                        btn.style.opacity = "1";
+                        btn.style.opacity = "0.6";
                     }
                 }
             }
-            document.getElementById("status-text").innerText = `Site ${site} Ready`;
+            document.getElementById("status-text").innerText = `SITE ${site} READY`;
         }
 
         window.switchType = (type) => {
