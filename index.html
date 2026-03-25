@@ -5,33 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SatSplat: 3D Satellite Reconstruction</title>
     <style>
-        /* --- 기존 스타일 유지 및 업데이트 --- */
         body { margin: 0; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
         
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 20px 30px; /* 패딩 약간 조절 */
+            padding: 20px 30px; 
             background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        /* 왼쪽 영역: 제목 및 저자 정보 */
         .header-left { display: flex; flex-direction: column; gap: 4px; }
         h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
         .subtitle { margin: 0; font-size: 0.9rem; color: #aaa; letter-spacing: 0.2px; }
         
-        /* ✅ 저자 및 소속 스타일 추가 */
         .authors { margin-top: 8px; font-size: 0.85rem; color: #eee; font-weight: 500; }
         .authors span { margin-right: 12px; white-space: nowrap; } /* 저자 간 간격 */
         .affiliation { margin-top: 2px; font-size: 0.75rem; color: #999; font-style: italic; }
 
         .workflow { margin-top: 12px; font-size: 0.75rem; color: #007aff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* 오른쪽 영역: 사이트 선택기 및 로고 */
         .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
         
-        /* ✅ 로고 컨테이너 스타일 추가 */
         .logo-container { display: flex; gap: 15px; align-items: center; }
         .logo-container img { height: 35px; width: auto; opacity: 0.9; } /* 로고 높이 조절 */
 
@@ -47,7 +42,6 @@
         #site-selector:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
         #site-selector option { background: #ffffff; color: #000000; }
 
-        /* --- 내비게이션 및 캔버스 스타일 (기존과 동일) --- */
         #nav-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; z-index: 100; }
         #nav-bar { display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); padding: 10px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.2); }
         .nav-btn { position: relative; padding: 10px 30px; border: none; background: #ffffff; color: #000000; cursor: pointer; border-radius: 12px; font-weight: 700; font-size: 11px; transition: all 0.2s; opacity: 0.4; white-space: nowrap; overflow: hidden; --progress: 0%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
