@@ -5,49 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SatSplat: 3D Satellite Reconstruction</title>
     <style>
-        body { margin: 0; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
         
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 20px 30px; 
-            background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
+            padding: 30px 40px; /* 패딩 증가 */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        .header-left { display: flex; flex-direction: column; gap: 4px; }
-        h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
-        .subtitle { margin: 0; font-size: 0.9rem; color: #aaa; letter-spacing: 0.2px; }
+        /* 왼쪽 영역: 가시성 대폭 강화 */
+        .header-left { display: flex; flex-direction: column; gap: 8px; }
+        h1 { margin: 0; font-size: 2.2rem; font-weight: 900; letter-spacing: -1px; color: #fff; } /* 제목 크기 증가 */
+        .subtitle { margin: 0; font-size: 1.1rem; color: #ccc; font-weight: 400; } /* 부제 크기 증가 */
         
-        .authors { margin-top: 8px; font-size: 0.85rem; color: #eee; font-weight: 500; }
-        .authors span { margin-right: 12px; white-space: nowrap; } /* 저자 간 간격 */
-        .affiliation { margin-top: 2px; font-size: 0.75rem; color: #999; font-style: italic; }
+        /* 저자 및 소속 강조 */
+        .authors { margin-top: 15px; font-size: 1.2rem; color: #fff; font-weight: 700; } /* 저자 이름 크기 및 두께 증가 */
+        .authors span { margin-right: 20px; white-space: nowrap; border-bottom: 2px solid rgba(0,122,255,0.5); padding-bottom: 2px; }
+        .affiliation { margin-top: 8px; font-size: 1.0rem; color: #aaa; font-weight: 500; } /* 소속 크기 증가 */
 
-        .workflow { margin-top: 12px; font-size: 0.75rem; color: #007aff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .workflow { margin-top: 15px; font-size: 0.9rem; color: #007aff; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; background: rgba(0,122,255,0.1); padding: 5px 12px; border-radius: 6px; align-self: flex-start; }
         
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        /* 오른쪽 영역: 로고 크기 및 선택기 가시성 */
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
         
-        .logo-container { display: flex; gap: 15px; align-items: center; }
-        .logo-container img { height: 35px; width: auto; opacity: 0.9; } /* 로고 높이 조절 */
+        .logo-container { display: flex; gap: 25px; align-items: center; background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 12px; }
+        .logo-container img { height: 50px; width: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); } /* 로고 크기 증가 및 그림자 추가 */
 
         #site-selector {
             background: #ffffff; color: #000000; border: none;
-            padding: 10px 35px 10px 15px; border-radius: 8px; font-size: 13px; font-weight: 700;
-            outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 12px center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.2s;
+            padding: 12px 45px 12px 20px; border-radius: 10px; font-size: 16px; font-weight: 800; /* 폰트 크기 증가 */
+            outline: none; cursor: pointer; appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 15px center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
         }
-        #site-selector:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
-        #site-selector option { background: #ffffff; color: #000000; }
 
-        #nav-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; z-index: 100; }
-        #nav-bar { display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); padding: 10px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.2); }
-        .nav-btn { position: relative; padding: 10px 30px; border: none; background: #ffffff; color: #000000; cursor: pointer; border-radius: 12px; font-weight: 700; font-size: 11px; transition: all 0.2s; opacity: 0.4; white-space: nowrap; overflow: hidden; --progress: 0%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .nav-btn::before { content: ""; position: absolute; bottom: 0; left: 0; height: 3px; width: var(--progress); background: #007aff; transition: width 0.1s ease; }
-        .nav-btn.active { background: #ffffff; opacity: 1 !important; color: #007aff; box-shadow: 0 0 15px rgba(0, 122, 255, 0.4); }
-        #status-bar { font-size: 9px; color: #777; text-transform: uppercase; letter-spacing: 1.5px; }
+        /* 하단 내비게이션 버튼 가시성 강화 */
+        #nav-container { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; z-index: 100; }
+        #nav-bar { display: flex; gap: 15px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(25px); padding: 15px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.2); }
+        
+        .nav-btn { position: relative; padding: 15px 40px; border: none; background: #333; color: #fff; cursor: pointer; border-radius: 15px; font-weight: 800; font-size: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0.5; --progress: 0%; }
+        .nav-btn.active { background: #fff; opacity: 1 !important; color: #007aff; transform: scale(1.05); box-shadow: 0 10px 25px rgba(0, 122, 255, 0.5); }
+        
+        #status-bar { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
@@ -55,7 +57,7 @@
     <div id="header">
         <div class="header-left">
             <h1>SatSplat: 3D Satellite Reconstruction</h1>
-            <p class="subtitle">Traditional Pipeline to Modern Methods</p>
+            <p class="subtitle">From Traditional Pipelines to Diffusion-based Refinement</p>
             
             <div class="authors">
                 <span>Rongjun Qin</span>
@@ -72,7 +74,7 @@
         <div class="header-right">
             <div class="logo-container">
                 <img src="TheOhioStateUniversity-REV2-Horiz-RGBHEX.png" alt="OSU Logo">
-                <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" style="height: 40px;">
+                <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" style="height: 55px;">
             </div>
             
             <select id="site-selector" onchange="changeSite(event)">
@@ -91,7 +93,7 @@
             <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
             <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion</button>
         </div>
-        <div id="status-bar"><span id="status-text">Connecting...</span></div>
+        <div id="status-bar"><span id="status-text">SYSTEM READY</span></div>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -147,14 +149,13 @@
                 return scene;
             } catch (error) {
                 console.error(`Error loading model ${key}:`, error);
-                document.getElementById("status-text").innerText = `Error loading ${type}`;
                 return null;
             }
         }
 
         async function updateSite(site) {
             currentSite = site;
-            document.getElementById("status-text").innerText = `Updating Site: ${site}`;
+            document.getElementById("status-text").innerText = `LOADING SITE: ${site}`;
             document.querySelectorAll('.nav-btn').forEach(b => { 
                 b.disabled = true; 
                 b.style.opacity = "0.2"; 
@@ -177,11 +178,11 @@
                     const btn = document.getElementById(`btn-${type}`);
                     if (btn) {
                         btn.disabled = false;
-                        btn.style.opacity = "1";
+                        btn.style.opacity = "0.5";
                     }
                 }
             }
-            document.getElementById("status-text").innerText = `Site ${site} Ready`;
+            document.getElementById("status-text").innerText = `SITE ${site} LOADED`;
         }
 
         window.switchType = (type) => {
