@@ -3,79 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SatSplat: 3D Satellite Reconstruction</title>
+    <title>SatSplat: Efficient Earth Observation Gaussian Splatting</title>
     <style>
         body { margin: 0; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
         
         #header {
             position: absolute; top: 0; left: 0; right: 0;
             padding: 35px 45px; 
-            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 40%, transparent 100%);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        .header-left { display: flex; flex-direction: column; gap: 4px; }
-        h1 { margin: 0; font-size: 2.0rem; font-weight: 900; letter-spacing: -0.8px; color: #ffffff; } 
-        .subtitle { margin: 0; font-size: 1.0rem; color: #bbb; font-weight: 400; } 
-        .workflow { margin-top: 8px; font-size: 0.85rem; color: #007aff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .header-left { display: flex; flex-direction: column; gap: 6px; max-width: 70%; }
+        h1 { margin: 0; font-size: 1.9rem; font-weight: 900; letter-spacing: -0.5px; color: #ffffff; line-height: 1.2; text-shadow: 0 2px 15px rgba(0,0,0,0.7); } 
+        .subtitle { margin: 0; font-size: 1.0rem; color: #bbb; font-weight: 500; opacity: 0.9; } 
+        .workflow { margin-top: 10px; font-size: 0.85rem; color: #007aff; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; }
 
-        .authors { margin-top: 12px; font-size: 1.1rem; color: #ffffff; font-weight: 700; } 
+        .authors { margin-top: 15px; font-size: 1.15rem; color: #ffffff; font-weight: 700; } 
         .authors span { margin-right: 20px; white-space: nowrap; }
-        .affiliation { margin-top: 4px; font-size: 0.95rem; color: #eeeeee; font-weight: 600; opacity: 0.9; } 
+        .authors sup { font-size: 0.7rem; margin-left: 2px; color: #007aff; }
+
+        .affiliation-box { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+        .affiliation { font-size: 0.85rem; color: #dddddd; font-weight: 500; line-height: 1.4; opacity: 0.9; } 
+        .email { font-size: 0.8rem; color: #007aff; font-weight: 600; margin-top: 4px; font-family: monospace; }
 
         .header-right { display: flex; flex-direction: column; align-items: flex-end; }
         .logo-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
         .logo-stack img.osu { height: 35px; width: auto; }
-        .logo-stack img.gda { height: 55px; width: auto; }
+        .logo-stack img.gda { height: 60px; width: auto; }
 
         #nav-container { 
-            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
             display: flex; flex-direction: column; align-items: center; gap: 15px; width: auto; z-index: 100; 
         }
         
         .controls-wrapper {
-            display: flex; align-items: center; gap: 15px; 
-            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(25px); 
-            padding: 10px 15px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            display: flex; align-items: center; gap: 20px; 
+            background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(30px); 
+            padding: 12px 20px; border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
         }
 
-        #nav-bar { display: flex; gap: 10px; }
+        #nav-bar { display: flex; gap: 12px; }
         
         .nav-btn { 
-            position: relative; padding: 12px 25px; border: none; background: rgba(255,255,255,0.1); 
-            color: #fff; cursor: pointer; border-radius: 14px; font-weight: 800; font-size: 11px; 
+            position: relative; padding: 14px 28px; border: none; background: rgba(255,255,255,0.1); 
+            color: #fff; cursor: pointer; border-radius: 16px; font-weight: 800; font-size: 12px; 
             transition: all 0.2s; opacity: 0.5; white-space: nowrap;
         }
-        .nav-btn.active { background: #fff; opacity: 1; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
+        .nav-btn.active { background: #fff; opacity: 1; color: #007aff; box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4); }
 
         #site-selector {
             background: #007aff; color: #ffffff; border: none;
-            padding: 10px 35px 10px 15px; border-radius: 14px; font-size: 13px; font-weight: 900;
+            padding: 12px 40px 12px 18px; border-radius: 16px; font-size: 14px; font-weight: 900;
             outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 12px center;
+            background-repeat: no-repeat; background-position: right 15px center;
         }
 
-        #status-bar { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
+        #status-bar { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
 <body>
     <div id="header">
         <div class="header-left">
-            <h1>SatSplat: 3D Satellite Reconstruction</h1>
+            <h1>Bundle-Adjusted Initialization for efficient Earth Observation Gaussian Splatting</h1>
             <p class="subtitle">Traditional Pipeline to Modern Methods</p>
             <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
             
             <div class="authors">
-                <span>Rongjun Qin</span>
-                <span>Shuang Song</span>
-                <span>Jiyong Kim</span>
+                <span>Jiyong Kim<sup>1</sup></span>
+                <span>Shuang Song<sup>1,3</sup></span>
+                <span>Rongjun Qin<sup>1,2</sup></span>
             </div>
-            <div class="affiliation">
-                Geospatial Data Analytics Lab (GDA), The Ohio State University
+            
+            <div class="affiliation-box">
+                <div class="affiliation"><sup>1</sup> Dept. of Civil, Environmental and Geodetic Engineering, The Ohio State University</div>
+                <div class="affiliation"><sup>2</sup> Dept. of Electrical and Computer Engineering, The Ohio State University</div>
+                <div class="affiliation"><sup>3</sup> Translational Data Analytics Institute, The Ohio State University</div>
+                <div class="email">{kim.9854, song.1634, qin.324}@osu.edu</div>
             </div>
         </div>
 
@@ -100,10 +108,10 @@
                 <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP</button>
                 <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS</button>
                 <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat</button>
-                <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">Diffusion</button>
+                <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion</button>
             </div>
         </div>
-        <div id="status-bar"><span id="status-text">System Ready</span></div>
+        <div id="status-bar"><span id="status-text">SYSTEM READY</span></div>
     </div>
 
     <canvas id="mainCanvas"></canvas>
