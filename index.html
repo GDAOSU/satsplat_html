@@ -5,96 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SatSplat: 3D Satellite Reconstruction</title>
     <style>
+        /* --- 기존 스타일 유지 및 업데이트 --- */
         body { margin: 0; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
+        
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 20px; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
-            z-index: 100; display: flex; justify-content: space-between; align-items: flex-start;
+            padding: 20px 30px; /* 패딩 약간 조절 */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
+            z-index: 100;
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
-        h1 { margin: 0; font-size: 1.4rem; font-weight: 700; }
-        .subtitle { margin: 4px 0 0; font-size: 0.8rem; color: #aaa; letter-spacing: 0.5px; }
-        .workflow { margin-top: 8px; font-size: 0.75rem; color: #007aff; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* 왼쪽 영역: 제목 및 저자 정보 */
+        .header-left { display: flex; flex-direction: column; gap: 4px; }
+        h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+        .subtitle { margin: 0; font-size: 0.9rem; color: #aaa; letter-spacing: 0.2px; }
         
+        /* ✅ 저자 및 소속 스타일 추가 */
+        .authors { margin-top: 8px; font-size: 0.85rem; color: #eee; font-weight: 500; }
+        .authors span { margin-right: 12px; white-space: nowrap; } /* 저자 간 간격 */
+        .affiliation { margin-top: 2px; font-size: 0.75rem; color: #999; font-style: italic; }
+
+        .workflow { margin-top: 12px; font-size: 0.75rem; color: #007aff; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* 오른쪽 영역: 사이트 선택기 및 로고 */
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+        
+        /* ✅ 로고 컨테이너 스타일 추가 */
+        .logo-container { display: flex; gap: 15px; align-items: center; }
+        .logo-container img { height: 35px; width: auto; opacity: 0.9; } /* 로고 높이 조절 */
+
         #site-selector {
-            background: #ffffff; 
-            color: #000000; 
-            border: none;
-            padding: 10px 35px 10px 15px;
-            border-radius: 8px; 
-            font-size: 13px; 
-            font-weight: 700;
-            outline: none; 
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
+            background: #ffffff; color: #000000; border: none;
+            padding: 10px 35px 10px 15px; border-radius: 8px; font-size: 13px; font-weight: 700;
+            outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
+            background-repeat: no-repeat; background-position: right 12px center;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.2s;
         }
+        #site-selector:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+        #site-selector option { background: #ffffff; color: #000000; }
 
-        #site-selector option {
-            background: #ffffff;
-            color: #000000;
-        }
-
-        #nav-container {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; z-index: 100;
-        }
-        #nav-bar {
-            display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px); padding: 10px; border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .nav-btn {
-            position: relative; 
-            padding: 10px 30px; 
-            border: none; 
-            background: #ffffff;
-            color: #000000; 
-            cursor: pointer; 
-            border-radius: 12px;
-            font-weight: 700; 
-            font-size: 11px; 
-            transition: all 0.2s; 
-            opacity: 0.4;
-            white-space: nowrap; 
-            overflow: hidden;
-            --progress: 0%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-        
-        .nav-btn::before {
-            content: ""; position: absolute; bottom: 0; left: 0; height: 3px;
-            width: var(--progress); background: #007aff; transition: width 0.1s ease;
-        }
-        
-        .nav-btn.active { 
-            background: #ffffff; 
-            opacity: 1 !important; 
-            color: #007aff;
-            box-shadow: 0 0 15px rgba(0, 122, 255, 0.4);
-        }
-
+        /* --- 내비게이션 및 캔버스 스타일 (기존과 동일) --- */
+        #nav-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; z-index: 100; }
+        #nav-bar { display: flex; gap: 12px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); padding: 10px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .nav-btn { position: relative; padding: 10px 30px; border: none; background: #ffffff; color: #000000; cursor: pointer; border-radius: 12px; font-weight: 700; font-size: 11px; transition: all 0.2s; opacity: 0.4; white-space: nowrap; overflow: hidden; --progress: 0%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .nav-btn::before { content: ""; position: absolute; bottom: 0; left: 0; height: 3px; width: var(--progress); background: #007aff; transition: width 0.1s ease; }
+        .nav-btn.active { background: #ffffff; opacity: 1 !important; color: #007aff; box-shadow: 0 0 15px rgba(0, 122, 255, 0.4); }
         #status-bar { font-size: 9px; color: #777; text-transform: uppercase; letter-spacing: 1.5px; }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
 <body>
     <div id="header">
-        <div>
-            <h1>3D Satellite Reconstruction</h1>
+        <div class="header-left">
+            <h1>SatSplat: 3D Satellite Reconstruction</h1>
             <p class="subtitle">Traditional Pipeline to Modern Methods</p>
+            
+            <div class="authors">
+                <span>Rongjun Qin</span>
+                <span>Shuang Song</span>
+                <span>Jiyong Kim</span>
+            </div>
+            <div class="affiliation">
+                Geospatial Data Analytics Lab (GDA), The Ohio State University
+            </div>
+
             <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
         </div>
-        <select id="site-selector" onchange="changeSite(event)">
-            <option value="068">JAX_068</option>
-            <option value="214">JAX_214</option>
-            <option value="251">JAX_251</option>
-            <option value="260">JAX_260</option>
-        </select>
+
+        <div class="header-right">
+            <div class="logo-container">
+                <img src="path/to/osu_logo.png" alt="Ohio State University Logo">
+                <img src="path/to/gda_logo.png" alt="GDA Lab Logo">
+            </div>
+            
+            <select id="site-selector" onchange="changeSite(event)">
+                <option value="068">JAX_068</option>
+                <option value="214">JAX_214</option>
+                <option value="251">JAX_251</option>
+                <option value="260">JAX_260</option>
+            </select>
+        </div>
     </div>
 
     <div id="nav-container">
@@ -138,25 +131,31 @@
             }
 
             const scene = new SPLAT.Scene();
-            await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (p) => updateProgress(type, p * 100));
-            
-            const obj = scene.objects[0];
-            if (obj && obj.data && obj.data.positions) {
-                const pos = obj.data.positions;
-                let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-                for (let i = 0; i < pos.length; i += 3) {
-                    minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
-                    minY = Math.min(minY, pos[i+1]); maxY = Math.max(maxY, pos[i+1]);
-                    minZ = Math.min(minZ, pos[i+2]); maxZ = Math.max(maxZ, pos[i+2]);
+            try {
+                await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (p) => updateProgress(type, p * 100));
+                
+                const obj = scene.objects[0];
+                if (obj && obj.data && obj.data.positions) {
+                    const pos = obj.data.positions;
+                    let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+                    for (let i = 0; i < pos.length; i += 3) {
+                        minX = Math.min(minX, pos[i]); maxX = Math.max(maxX, pos[i]);
+                        minY = Math.min(minY, pos[i+1]); maxY = Math.max(maxY, pos[i+1]);
+                        minZ = Math.min(minZ, pos[i+2]); maxZ = Math.max(maxZ, pos[i+2]);
+                    }
+                    const cX = (minX + maxX) / 2, cY = (minY + maxY) / 2, cZ = (minZ + maxZ) / 2;
+                    for (let i = 0; i < pos.length; i += 3) {
+                        pos[i] -= cX; pos[i+1] -= cY; pos[i+2] -= cZ;
+                    }
                 }
-                const cX = (minX + maxX) / 2, cY = (minY + maxY) / 2, cZ = (minZ + maxZ) / 2;
-                for (let i = 0; i < pos.length; i += 3) {
-                    pos[i] -= cX; pos[i+1] -= cY; pos[i+2] -= cZ;
-                }
+                obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
+                scenes[key] = scene;
+                return scene;
+            } catch (error) {
+                console.error(`Error loading model ${key}:`, error);
+                document.getElementById("status-text").innerText = `Error loading ${type}`;
+                return null;
             }
-            obj.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
-            scenes[key] = scene;
-            return scene;
         }
 
         async function updateSite(site) {
@@ -166,10 +165,11 @@
                 b.disabled = true; 
                 b.style.opacity = "0.2"; 
                 b.style.setProperty('--progress', '0%');
+                b.classList.remove('active');
             });
 
             const firstScene = await loadSingleModel(site, "asp");
-            if (currentSite === site) {
+            if (currentSite === site && firstScene) {
                 currentScene = firstScene;
                 switchType("asp");
                 document.getElementById("btn-asp").disabled = false;
