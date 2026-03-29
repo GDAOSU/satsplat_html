@@ -17,16 +17,13 @@
 
         .header-left { display: flex; flex-direction: column; gap: 2px; max-width: 75%; }
         h1 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); } 
-        .subtitle { margin: 0; font-size: 0.95rem; color: #bbb; font-weight: 400; } 
-        .workflow { margin-top: 6px; font-size: 0.75rem; color: #007aff; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .authors { margin-top: 12px; font-size: 1.1rem; color: #ffffff; font-weight: 700; } 
+        .authors span { margin-right: 20px; white-space: nowrap; }
 
-        .authors { margin-top: 12px; font-size: 1.0rem; color: #ffffff; font-weight: 700; } 
-        .authors span { margin-right: 15px; white-space: nowrap; }
-        .authors sup { font-size: 0.6rem; color: #007aff; }
-
-        .affiliation-box { margin-top: 5px; display: flex; flex-direction: column; gap: 1px; }
-        .affiliation { font-size: 0.8rem; color: #aaa; font-weight: 500; line-height: 1.3; } 
-        .email { font-size: 0.75rem; color: #007aff; font-weight: 600; margin-top: 2px; font-family: monospace; opacity: 0.9; }
+        .affiliation-box { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+        .affiliation { font-size: 0.9rem; color: #ccc; font-weight: 500; } 
+        .email { font-size: 0.85rem; color: #007aff; font-weight: 600; font-family: monospace; }
 
         .header-right { display: flex; flex-direction: column; align-items: flex-end; }
         .logo-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
@@ -52,7 +49,7 @@
             color: #fff; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 11px; 
             transition: all 0.2s; opacity: 0.5; white-space: nowrap;
         }
-        .nav-btn.active { background: #fff; opacity: 1; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
+        .nav-btn.active { background: #fff; opacity: 1 !important; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
 
         #site-selector {
             background: #007aff; color: #ffffff; border: none;
@@ -62,7 +59,11 @@
             background-repeat: no-repeat; background-position: right 12px center;
         }
 
-        #status-bar { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+        #status-bar { 
+            font-size: 11px; color: #007aff; text-transform: uppercase; 
+            letter-spacing: 2px; font-weight: 800; background: rgba(0,0,0,0.5);
+            padding: 4px 12px; border-radius: 10px;
+        }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
@@ -70,20 +71,16 @@
     <div id="header">
         <div class="header-left">
             <h1>SatSplat: 3D Satellite Reconstruction</h1>
-            <p class="subtitle">Traditional Pipeline to Modern Methods</p>
-            <p class="workflow">ASP &nbsp; → &nbsp; Skyfall-GS &nbsp; → &nbsp; SatSplat &nbsp; → &nbsp; SatSplat-Diffusion </p>
             
             <div class="authors">
-                <span>Rongjun Qin<sup>1,2,*</sup></span>
-                <span>Shuang Song<sup>1,3</sup></span>
-                <span>Jiyong Kim<sup>1</sup></span>
+                <span>Rongjun Qin</span>
+                <span>Shuang Song</span>
+                <span>Jiyong Kim</span>
             </div>
             
             <div class="affiliation-box">
-                <div class="affiliation"><sup>1</sup> Dept. of Civil, Environmental and Geodetic Engineering, The Ohio State University</div>
-                <div class="affiliation"><sup>2</sup> Dept. of Electrical and Computer Engineering, The Ohio State University</div>
-                <div class="affiliation"><sup>3</sup> Translational Data Analytics Institute, The Ohio State University</div>
-                <div class="email">{qin.324, song.1634, kim.9854}@osu.edu</div>
+                <div class="affiliation">The Ohio State University</div>
+                <div class="email">qin.324@osu.edu</div>
             </div>
         </div>
 
@@ -138,7 +135,12 @@
 
             const scene = new SPLAT.Scene();
             try {
-                await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene);
+                await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (progress) => {
+                    if (currentSite === site) {
+                        const percent = Math.round(progress * 100);
+                        document.getElementById("status-text").innerText = `LOADING ${type.toUpperCase()}: ${percent}%`;
+                    }
+                });
                 const obj = scene.objects[0];
                 if (obj && obj.data && obj.data.positions) {
                     const pos = obj.data.positions;
@@ -164,7 +166,6 @@
 
         async function updateSite(site) {
             currentSite = site;
-            document.getElementById("status-text").innerText = `LOADING: ${site}`;
             document.querySelectorAll('.nav-btn').forEach(b => { 
                 b.disabled = true; 
                 b.style.opacity = "0.2"; 
@@ -185,7 +186,7 @@
                     const btn = document.getElementById(`btn-${type}`);
                     if (btn) {
                         btn.disabled = false;
-                        btn.style.opacity = "0.6";
+                        if (!btn.classList.contains('active')) btn.style.opacity = "0.6";
                     }
                 }
             }
@@ -196,8 +197,13 @@
             const key = `${currentSite}_${type}`;
             if (!scenes[key]) return;
             currentScene = scenes[key];
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`btn-${type}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (!btn.disabled) btn.style.opacity = "0.6";
+            });
+            const activeBtn = document.getElementById(`btn-${type}`);
+            activeBtn.classList.add('active');
+            activeBtn.style.opacity = "1";
         };
 
         window.changeSite = (e) => updateSite(e.target.value);
