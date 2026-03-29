@@ -52,7 +52,7 @@
 
         .nav-btn::after {
             content: ''; position: absolute; bottom: 6px; left: 15%; width: 70%; height: 2px;
-            background: rgba(255, 255, 255, 0.1); border-radius: 1px;
+            background: rgba(255, 255, 255, 0.05); border-radius: 1px;
         }
 
         .progress-bar {
@@ -62,8 +62,7 @@
         }
 
         .nav-btn.active { background: #fff; opacity: 1 !important; color: #007aff; box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3); }
-        .nav-btn.active .progress-bar { display: none; }
-        .nav-btn.active::after { display: none; }
+        .nav-btn.active .progress-bar, .nav-btn.active::after { display: none; }
 
         #site-selector {
             background: #007aff; color: #ffffff; border: none;
@@ -73,11 +72,6 @@
             background-repeat: no-repeat; background-position: right 12px center;
         }
 
-        #status-bar { 
-            font-size: 11px; color: #007aff; text-transform: uppercase; 
-            letter-spacing: 2px; font-weight: 800; background: rgba(0,0,0,0.5);
-            padding: 4px 12px; border-radius: 10px;
-        }
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
     </style>
 </head>
@@ -118,7 +112,6 @@
                 <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion<div class="progress-bar"></div></button>
             </div>
         </div>
-        <div id="status-bar"><span id="status-text">SYSTEM READY</span></div>
     </div>
 
     <canvas id="mainCanvas"></canvas>
@@ -191,7 +184,6 @@
                     if (btn) { btn.disabled = false; if (!btn.classList.contains('active')) btn.style.opacity = "0.6"; }
                 }
             });
-            document.getElementById("status-text").innerText = `SITE ${site} READY`;
         }
 
         window.switchType = (type) => {
