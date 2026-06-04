@@ -134,8 +134,8 @@
         const currentTypes = fullConfig.filter(typeObj => {
             if (typeObj.id === "asp" && urlParams.get("hide_asp") === "true") return false;
             if (typeObj.id === "step1" && (urlParams.get("hide_satsplat") === "true" || urlParams.get("hide_step1") === "true")) return false;
-            if (typeObj.id === "step2" && urlParams.get("hide_satsplatdiff") === "true") return false;
-            if (typeObj.id === "skyfall" && (urlParams.get("hide_skyfallgs") === "true" || urlParams.get("hide_skyfall") === "true")) return false;
+            if (typeObj.id === "step2" && urlParams.get("hide_satsplat_diffusion") === "true") return false;
+            if (typeObj.id === "skyfall" && (urlParams.get("hide_skyfall_gs") === "true" || urlParams.get("hide_skyfall") === "true")) return false;
             return true;
         });
 
