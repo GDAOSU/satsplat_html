@@ -138,7 +138,7 @@
         let initialSiteParam = urlParams.get("site");
 
         if (initialSiteParam && !initialSiteParam.includes("_") && /^\d+$/.test(initialSiteParam)) {
-            initialSiteParam = "JAX_" + initialSiteParam;
+            initialSiteParam = initialSiteParam;
         }
 
         function renderSiteSelector() {
