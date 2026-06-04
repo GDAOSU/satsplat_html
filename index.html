@@ -134,20 +134,35 @@
             return true;
         });
 
-        const defaultSites = ["068", "214", "251", "260"];
-        const paramSites = urlParams.get("sites");
-        const currentSites = paramSites ? paramSites.split(",").map(s => s.trim()) : defaultSites;
+        const defaultSites = ["JAX_068", "JAX_214", "JAX_251", "JAX_260"];
+        let initialSiteParam = urlParams.get("site");
+
+        if (initialSiteParam && !initialSiteParam.includes("_") && /^\d+$/.test(initialSiteParam)) {
+            initialSiteParam = "JAX_" + initialSiteParam;
+        }
 
         function renderSiteSelector() {
             const selector = document.getElementById("site-selector");
             selector.innerHTML = "";
-            currentSites.forEach(site => {
+            
+            let listToRender = [...defaultSites];
+            if (initialSiteParam && !listToRender.includes(initialSiteParam)) {
+                listToRender.push(initialSiteParam);
+            }
+
+            listToRender.forEach(site => {
                 const option = document.createElement("option");
                 option.value = site;
-                option.textContent = `SITE: JAX_${site}`;
+                option.textContent = `SITE: ${site}`;
                 selector.appendChild(option);
             });
-            currentSite = currentSites[0] || "";
+
+            if (initialSiteParam) {
+                selector.value = initialSiteParam;
+                currentSite = initialSiteParam;
+            } else {
+                currentSite = listToRender[0] || "";
+            }
         }
 
         function renderNavButtons() {
@@ -166,7 +181,7 @@
 
         function getUrl(site, type) {
             let suffix = type === "asp" ? "asp" : (type === "skyfall" ? "skyfallgs" : `${type}_baked`);
-            return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
+            return `${BASE_URL}/${site}_${suffix}.ply?download=true`;
         }
 
         async function loadSingleModel(site, type) {
