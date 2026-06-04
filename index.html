@@ -51,7 +51,7 @@
         .nav-btn { 
             position: relative; padding: 12px 25px; border: none; background: rgba(255,255,255,0.1); 
             color: #fff; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 11px; 
-            transition: all 0.2s; opacity: 0.5; white-space: nowrap;
+            transition: all 0.2s; opacity: 0.2; white-space: nowrap;
         }
 
         .nav-btn::after {
@@ -108,12 +108,7 @@
                 <option value="251">SITE: JAX_251</option>
                 <option value="260">SITE: JAX_260</option>
             </select>
-            <div id="nav-bar">
-                <button id="btn-asp" class="nav-btn" onclick="switchType('asp')">ASP<div class="progress-bar"></div></button>
-                <button id="btn-skyfall" class="nav-btn" onclick="switchType('skyfall')">Skyfall-GS<div class="progress-bar"></div></button>
-                <button id="btn-step1" class="nav-btn" onclick="switchType('step1')">SatSplat<div class="progress-bar"></div></button>
-                <button id="btn-step2" class="nav-btn" onclick="switchType('step2')">SatSplat-Diffusion<div class="progress-bar"></div></button>
-            </div>
+            <div id="nav-bar"></div>
         </div>
     </div>
 
@@ -127,6 +122,37 @@
         const scenes = {};
         const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewMode = urlParams.get('mode') === '2' ? 2 : 4;
+
+        const config4Mode = [
+            { id: "asp", name: "ASP" },
+            { id: "step1", name: "SatSplat" },
+            { id: "step2", name: "SatSplat-Diffusion" },
+            { id: "skyfall", name: "Skyfall-GS" }
+        ];
+
+        const config2Mode = [
+            { id: "asp", name: "ASP" },
+            { id: "step2", name: "SatSplat-Diffusion" }
+        ];
+
+        const currentTypes = viewMode === 2 ? config2Mode : config4Mode;
+
+        function renderNavButtons() {
+            const navBar = document.getElementById("nav-bar");
+            navBar.innerHTML = "";
+            currentTypes.forEach(typeObj => {
+                const btn = document.createElement("button");
+                btn.id = `btn-${typeObj.id}`;
+                btn.className = "nav-btn";
+                btn.disabled = true;
+                btn.onclick = () => switchType(typeObj.id);
+                btn.innerHTML = `${typeObj.name}<div class="progress-bar"></div>`;
+                navBar.appendChild(btn);
+            });
+        }
+
         function getUrl(site, type) {
             let suffix = type === "asp" ? "asp" : (type === "skyfall" ? "skyfallgs" : `${type}_baked`);
             return `${BASE_URL}/JAX_${site}_${suffix}.ply?download=true`;
@@ -137,6 +163,8 @@
             if (scenes[key]) return scenes[key];
             const btn = document.getElementById(`btn-${type}`);
             const progressBar = btn?.querySelector('.progress-bar');
+            if (btn) btn.style.opacity = "0.5";
+
             const scene = new SPLAT.Scene();
             try {
                 await SPLAT.PLYLoader.LoadAsync(getUrl(site, type), scene, (progress) => {
@@ -168,25 +196,33 @@
 
         async function updateSite(site) {
             currentSite = site;
+            
             document.querySelectorAll('.nav-btn').forEach(b => { 
-                b.disabled = true; b.style.opacity = "0.2";
+                b.disabled = true; b.className = "nav-btn"; b.style.opacity = "0.2";
                 const pb = b.querySelector('.progress-bar');
                 if (pb) pb.style.width = '0%';
             });
-            const firstScene = await loadSingleModel(site, "asp");
-            if (currentSite === site && firstScene) {
-                currentScene = firstScene;
-                switchType("asp");
-                document.getElementById("btn-asp").disabled = false;
-                document.getElementById("btn-asp").style.opacity = "1";
-            }
-            ["skyfall", "step1", "step2"].forEach(async (type) => {
-                await loadSingleModel(site, type);
-                if (currentSite === site) {
-                    const btn = document.getElementById(`btn-${type}`);
-                    if (btn) { btn.disabled = false; if (!btn.classList.contains('active')) btn.style.opacity = "0.6"; }
+
+            let isFirst = true;
+            for (const typeObj of currentTypes) {
+                if (currentSite !== site) break;
+
+                const loadedScene = await loadSingleModel(site, typeObj.id);
+                
+                if (currentSite === site && loadedScene) {
+                    const btn = document.getElementById(`btn-${typeObj.id}`);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.opacity = "0.6";
+                    }
+                    
+                    if (isFirst) {
+                        currentScene = loadedScene;
+                        switchType(typeObj.id);
+                        isFirst = false;
+                    }
                 }
-            });
+            }
         }
 
         window.switchType = (type) => {
@@ -198,13 +234,16 @@
                 if (!btn.disabled) btn.style.opacity = "0.6";
             });
             const activeBtn = document.getElementById(`btn-${type}`);
-            activeBtn.classList.add('active');
-            activeBtn.style.opacity = "1";
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.opacity = "1";
+            }
         };
 
         window.changeSite = (e) => updateSite(e.target.value);
 
         async function main() {
+            renderNavButtons();
             const canvas = document.getElementById("mainCanvas");
             renderer = new SPLAT.WebGLRenderer(canvas);
             camera = new SPLAT.Camera();
