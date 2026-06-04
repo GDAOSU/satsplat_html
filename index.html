@@ -123,21 +123,21 @@
         const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
 
         const urlParams = new URLSearchParams(window.location.search);
-        const viewMode = urlParams.get('mode') === '2' ? 2 : 4;
-
-        const config4Mode = [
+        
+        const fullConfig = [
             { id: "asp", name: "ASP" },
             { id: "step1", name: "SatSplat" },
             { id: "step2", name: "SatSplat-Diffusion" },
             { id: "skyfall", name: "Skyfall-GS" }
         ];
 
-        const config2Mode = [
-            { id: "asp", name: "ASP" },
-            { id: "step2", name: "SatSplat-Diffusion" }
-        ];
-
-        const currentTypes = viewMode === 2 ? config2Mode : config4Mode;
+        const currentTypes = fullConfig.filter(typeObj => {
+            if (typeObj.id === "asp" && urlParams.get("hide_asp") === "true") return false;
+            if (typeObj.id === "step1" && (urlParams.get("hide_satsplat") === "true" || urlParams.get("hide_step1") === "true")) return false;
+            if (typeObj.id === "step2" && urlParams.get("hide_satsplatdiff") === "true") return false;
+            if (typeObj.id === "skyfall" && (urlParams.get("hide_skyfallgs") === "true" || urlParams.get("hide_skyfall") === "true")) return false;
+            return true;
+        });
 
         function renderNavButtons() {
             const navBar = document.getElementById("nav-bar");
