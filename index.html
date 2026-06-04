@@ -102,12 +102,7 @@
 
     <div id="nav-container">
         <div class="controls-wrapper">
-            <select id="site-selector" onchange="changeSite(event)">
-                <option value="068">SITE: JAX_068</option>
-                <option value="214">SITE: JAX_214</option>
-                <option value="251">SITE: JAX_251</option>
-                <option value="260">SITE: JAX_260</option>
-            </select>
+            <select id="site-selector" onchange="changeSite(event)"></select>
             <div id="nav-bar"></div>
         </div>
     </div>
@@ -118,7 +113,7 @@
         import * as SPLAT from "https://cdn.jsdelivr.net/npm/gsplat@latest";
 
         let renderer, camera, controls, currentScene;
-        let currentSite = "068";
+        let currentSite = "";
         const scenes = {};
         const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
 
@@ -138,6 +133,22 @@
             if (typeObj.id === "skyfall" && (urlParams.get("hide_skyfall_gs") === "true" || urlParams.get("hide_skyfall") === "true")) return false;
             return true;
         });
+
+        const defaultSites = ["068", "214", "251", "260"];
+        const paramSites = urlParams.get("sites");
+        const currentSites = paramSites ? paramSites.split(",").map(s => s.trim()) : defaultSites;
+
+        function renderSiteSelector() {
+            const selector = document.getElementById("site-selector");
+            selector.innerHTML = "";
+            currentSites.forEach(site => {
+                const option = document.createElement("option");
+                option.value = site;
+                option.textContent = `SITE: JAX_${site}`;
+                selector.appendChild(option);
+            });
+            currentSite = currentSites[0] || "";
+        }
 
         function renderNavButtons() {
             const navBar = document.getElementById("nav-bar");
@@ -243,6 +254,7 @@
         window.changeSite = (e) => updateSite(e.target.value);
 
         async function main() {
+            renderSiteSelector();
             renderNavButtons();
             const canvas = document.getElementById("mainCanvas");
             renderer = new SPLAT.WebGLRenderer(canvas);
@@ -259,7 +271,7 @@
                 requestAnimationFrame(frame);
             };
             requestAnimationFrame(frame);
-            updateSite("068");
+            if (currentSite) updateSite(currentSite);
         }
         main();
     </script>
