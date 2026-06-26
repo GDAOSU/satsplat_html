@@ -86,14 +86,31 @@
             background-repeat: no-repeat; background-position: right 12px center;
         }
 
-        canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+        /* All canvases share the same full-screen footprint and stack on top
+           of each other. Only the relevant one(s) are visible at a time. */
+        canvas {
+            display: block; position: absolute; top: 0; left: 0;
+            width: 100vw; height: 100vh; outline: none;
+        }
+        #mainCanvas { z-index: 1; }
+        .compare-canvas { z-index: 1; display: none; }
+        body.compare-active #mainCanvas { display: none; }
+        body.compare-active .compare-canvas { display: block; }
+
+        /* Transparent layer that always owns the OrbitControls pointer
+           events, in both normal and compare mode, so there is only ever
+           one source of truth for the camera. */
+        #interact-layer {
+            position: absolute; inset: 0; z-index: 30; cursor: grab;
+            touch-action: none;
+        }
 
         /* ---- Compare mode overlay ---- */
         #compare-overlay {
             position: absolute; inset: 0; z-index: 50;
             display: none; pointer-events: none;
         }
-        #compare-overlay.active { display: block; }
+        body.compare-active #compare-overlay { display: block; }
 
         .compare-label {
             position: absolute; top: 100px; transform: translateX(-50%);
@@ -154,6 +171,19 @@
         </div>
     </div>
 
+    <!-- Single canvas used in normal (single-view) mode -->
+    <canvas id="mainCanvas"></canvas>
+
+    <!-- Three canvases used in compare mode, one per method, each clipped
+         via CSS clip-path to its slider-defined region -->
+    <canvas id="compareCanvas-0" class="compare-canvas"></canvas>
+    <canvas id="compareCanvas-1" class="compare-canvas"></canvas>
+    <canvas id="compareCanvas-2" class="compare-canvas"></canvas>
+
+    <!-- Always-on-top transparent layer that owns OrbitControls input,
+         so there is exactly one camera and one source of truth in both modes -->
+    <div id="interact-layer"></div>
+
     <div id="compare-overlay">
         <div class="compare-label" id="label-0">ASP</div>
         <div class="compare-label" id="label-1">SatSplat-Diffusion</div>
@@ -163,12 +193,10 @@
     </div>
     <div id="compare-loading">Loading comparison scenes…</div>
 
-    <canvas id="mainCanvas"></canvas>
-
     <script type="module">
         import * as SPLAT from "https://cdn.jsdelivr.net/npm/gsplat@latest";
 
-        let renderer, camera, controls, currentScene;
+        let mainRenderer, camera, controls, currentScene;
         let currentSite = "";
         const scenes = {};
         const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
@@ -323,37 +351,29 @@
         };
 
         // =====================================================================
-        // Compare Mode: splits the canvas into 3 regions with two drag sliders,
-        // rendering ASP / SatSplat-Diffusion / Skyfall-GS simultaneously via
-        // WebGL scissor clipping. Fully separate from the single-view nav
-        // button logic above so neither path interferes with the other.
+        // Compare Mode: three independent canvases/renderers (one per method),
+        // each visually cropped to a slider-defined region via CSS clip-path.
+        // All three share the SAME camera + SAME OrbitControls instance bound
+        // to a persistent transparent interaction layer, so there is only one
+        // source of truth for the view in both normal and compare mode.
         // =====================================================================
 
         const compareTypes = ["asp", "step2", "skyfall"]; // ASP / SatSplat-Diffusion / Skyfall-GS
+        const compareRenderers = [];
         let compareMode = false;
         let sliderFracs = [0.333, 0.667];
         let draggingHandle = null;
-        let glContext = null;
-
-        function getGL() {
-            if (!glContext) {
-                const canvas = document.getElementById("mainCanvas");
-                glContext = canvas.getContext("webgl2") || canvas.getContext("webgl");
-            }
-            return glContext;
-        }
 
         window.toggleCompareMode = async () => {
             const btn = document.getElementById("compare-toggle");
-            const overlay = document.getElementById("compare-overlay");
             const loading = document.getElementById("compare-loading");
             const navContainer = document.getElementById("nav-container");
 
             if (compareMode) {
                 compareMode = false;
+                document.body.classList.remove("compare-active");
                 btn.classList.remove("active");
                 btn.textContent = "Compare: ASP / SatSplat-Diffusion / Skyfall-GS";
-                overlay.classList.remove("active");
                 navContainer.style.display = "";
                 const fallbackType = currentTypes.find(t => scenes[`${currentSite}_${t.id}`]);
                 if (fallbackType) switchType(fallbackType.id);
@@ -371,22 +391,36 @@
             }
 
             compareMode = true;
+            document.body.classList.add("compare-active");
             btn.classList.add("active");
             btn.textContent = "Exit Compare Mode";
-            overlay.classList.add("active");
             navContainer.style.display = "none";
-            updateCompareLabels();
+            resizeCompareRenderers();
+            updateCompareLayout();
         };
 
-        function updateCompareLabels() {
+        function resizeCompareRenderers() {
+            compareRenderers.forEach(r => r.setSize(window.innerWidth, window.innerHeight, 1.0));
+        }
+
+        function updateCompareLayout() {
             const w = window.innerWidth;
             const x0 = sliderFracs[0] * w;
             const x1 = sliderFracs[1] * w;
+
             document.getElementById("handle-0").style.left = `${x0}px`;
             document.getElementById("handle-1").style.left = `${x1}px`;
             document.getElementById("label-0").style.left = `${x0 / 2}px`;
             document.getElementById("label-1").style.left = `${(x0 + x1) / 2}px`;
             document.getElementById("label-2").style.left = `${(x1 + w) / 2}px`;
+
+            // clip-path insets are measured inward from each edge of the element's own box
+            const c0 = document.getElementById("compareCanvas-0");
+            const c1 = document.getElementById("compareCanvas-1");
+            const c2 = document.getElementById("compareCanvas-2");
+            c0.style.clipPath = `inset(0 ${Math.max(0, w - x0)}px 0 0)`;
+            c1.style.clipPath = `inset(0 ${Math.max(0, w - x1)}px 0 ${Math.max(0, x0)}px)`;
+            c2.style.clipPath = `inset(0 0 0 ${Math.max(0, x1)}px)`;
         }
 
         function setupSliderDrag() {
@@ -395,6 +429,7 @@
                 handle.addEventListener("pointerdown", (e) => {
                     draggingHandle = idx;
                     handle.setPointerCapture(e.pointerId);
+                    e.stopPropagation();
                 });
             });
             window.addEventListener("pointermove", (e) => {
@@ -410,28 +445,17 @@
                     frac = Math.min(frac, 1 - margin);
                 }
                 sliderFracs[draggingHandle] = frac;
-                updateCompareLabels();
+                updateCompareLayout();
             });
             window.addEventListener("pointerup", () => { draggingHandle = null; });
         }
 
         function renderCompareFrame() {
-            const gl = getGL();
-            if (!gl) return;
-            const canvas = document.getElementById("mainCanvas");
-            const w = canvas.width, h = canvas.height;
-            const xBounds = [0, Math.round(sliderFracs[0] * w), Math.round(sliderFracs[1] * w), w];
-
-            gl.enable(gl.SCISSOR_TEST);
-            for (let i = 0; i < 3; i++) {
-                const sx = xBounds[i], ex = xBounds[i + 1];
-                if (ex <= sx) continue;
-                gl.scissor(sx, 0, ex - sx, h);
+            for (let i = 0; i < compareTypes.length; i++) {
                 const key = `${currentSite}_${compareTypes[i]}`;
                 const scene = scenes[key];
-                if (scene) renderer.render(scene, camera);
+                if (scene) compareRenderers[i].render(scene, camera);
             }
-            gl.disable(gl.SCISSOR_TEST);
         }
 
         window.changeSite = async (e) => {
@@ -448,25 +472,32 @@
         async function main() {
             renderSiteSelector();
             renderNavButtons();
-            const canvas = document.getElementById("mainCanvas");
-            renderer = new SPLAT.WebGLRenderer(canvas);
+
             camera = new SPLAT.Camera();
-            controls = new SPLAT.OrbitControls(camera, canvas);
+            controls = new SPLAT.OrbitControls(camera, document.getElementById("interact-layer"));
             camera.position = new SPLAT.Vector3(1.5, -0.8, 0.5);
             controls.setCameraTarget(new SPLAT.Vector3(0, 0, 0));
+
+            mainRenderer = new SPLAT.WebGLRenderer(document.getElementById("mainCanvas"));
+            for (let i = 0; i < 3; i++) {
+                compareRenderers.push(new SPLAT.WebGLRenderer(document.getElementById(`compareCanvas-${i}`)));
+            }
+
             const resize = () => {
-                renderer.setSize(window.innerWidth, window.innerHeight, 1.0);
-                if (compareMode) updateCompareLabels();
+                mainRenderer.setSize(window.innerWidth, window.innerHeight, 1.0);
+                resizeCompareRenderers();
+                if (compareMode) updateCompareLayout();
             };
             window.addEventListener("resize", resize);
             resize();
             setupSliderDrag();
+
             const frame = () => {
                 controls.update();
                 if (compareMode) {
                     renderCompareFrame();
                 } else if (currentScene) {
-                    renderer.render(currentScene, camera);
+                    mainRenderer.render(currentScene, camera);
                 }
                 requestAnimationFrame(frame);
             };
