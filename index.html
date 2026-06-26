@@ -271,7 +271,11 @@
             return true;
         });
 
-        const defaultSites = ["JAX_068", "JAX_214", "JAX_251", "JAX_260"];
+        const defaultSites = [
+            "JAX_004", "JAX_068", "JAX_214", "JAX_168", "JAX_251", "JAX_260", "JAX_280",
+            "OMA_203", "OMA_212", "OMA_315",
+            "IARPA_001", "IARPA_002", "IARPA_003"
+        ];
         let initialSiteParam = urlParams.get("site");
 
         if (initialSiteParam && !initialSiteParam.includes("_") && /^\d+$/.test(initialSiteParam)) {
