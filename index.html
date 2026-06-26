@@ -17,7 +17,7 @@
 
         .header-left { display: flex; flex-direction: column; gap: 2px; max-width: 75%; }
         h1 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        h1.long-title { max-width: 640px; line-height: 1.25; }
+        h1.long-title { font-size: 1.45rem; max-width: 760px; line-height: 1.25; }
 
         .authors { margin-top: 12px; font-size: 1.1rem; color: #ffffff; font-weight: 700; }
         .authors span { margin-right: 20px; white-space: nowrap; }
@@ -250,11 +250,16 @@
             if (compareBtn) compareBtn.style.display = "none";
         }
 
-        const fullConfig = [
-            { id: "asp", name: isDiffVer ? "Photogrammetric Initialization" : "ASP" },
-            { id: "step1", name: isDiffVer ? "Geometric Optimization" : "SatSplat" },
-            { id: "step2", name: isDiffVer ? "Shadow-Guided Generative Refinement" : "SatSplatDiff" },
-            { id: "skyfall", name: "Skyfall-GS" }
+        const fullConfig = isDiffVer ? [
+            { id: "asp", label: "1. Photogrammetric<br>Initialization" },
+            { id: "step1", label: "2. Geometric<br>Optimization" },
+            { id: "step2", label: "3. Shadow-Guided<br>Generative Refinement" },
+            { id: "skyfall", label: "Skyfall-GS" }
+        ] : [
+            { id: "asp", label: "ASP" },
+            { id: "step1", label: "SatSplat" },
+            { id: "step2", label: "SatSplatDiff" },
+            { id: "skyfall", label: "Skyfall-GS" }
         ];
 
         const currentTypes = fullConfig.filter(typeObj => {
@@ -305,7 +310,7 @@
                 btn.className = "nav-btn";
                 btn.disabled = true;
                 btn.onclick = () => switchType(typeObj.id);
-                btn.innerHTML = `${typeObj.name}<div class="progress-bar"></div>`;
+                btn.innerHTML = `${typeObj.label}<div class="progress-bar"></div>`;
                 navBar.appendChild(btn);
             });
         }
