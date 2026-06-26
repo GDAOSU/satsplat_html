@@ -6,51 +6,61 @@
     <title>SatSplat: 3D Satellite Reconstruction</title>
     <style>
         body { margin: 0; background: #000; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; color: white; -webkit-tap-highlight-color: transparent; }
-        
+
         #header {
             position: absolute; top: 0; left: 0; right: 0;
-            padding: 25px 35px; 
+            padding: 25px 35px;
             background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
             z-index: 100;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
         .header-left { display: flex; flex-direction: column; gap: 2px; max-width: 75%; }
-        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); } 
-        
-        .authors { margin-top: 12px; font-size: 1.1rem; color: #ffffff; font-weight: 700; } 
+        h1 { margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+        .authors { margin-top: 12px; font-size: 1.1rem; color: #ffffff; font-weight: 700; }
         .authors span { margin-right: 20px; white-space: nowrap; }
 
         .affiliation-box { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
-        .affiliation { font-size: 0.9rem; color: #ccc; font-weight: 500; } 
+        .affiliation { font-size: 0.9rem; color: #ccc; font-weight: 500; }
         .email { font-size: 0.85rem; color: #007aff; font-weight: 600; font-family: monospace; }
 
-        .header-right { display: flex; flex-direction: column; align-items: flex-end; }
+        .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
         .logo-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
         .logo-stack img.osu { height: 28px; width: auto; }
-        .logo-stack img.gda { 
-            width: 120px; 
-            height: auto; 
+        .logo-stack img.gda {
+            width: 120px;
+            height: auto;
             filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
         }
 
-        #nav-container { 
-            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); 
-            display: flex; flex-direction: column; align-items: center; gap: 12px; width: auto; z-index: 100; 
+        .compare-toggle-btn {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 9px 18px; border-radius: 14px;
+            font-size: 12px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
         }
-        
+        .compare-toggle-btn:hover { background: rgba(255,255,255,0.2); }
+        .compare-toggle-btn.active { background: #007aff; border-color: #007aff; }
+
+        #nav-container {
+            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 12px; width: auto; z-index: 100;
+        }
+
         .controls-wrapper {
-            display: flex; align-items: center; gap: 15px; 
-            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(20px); 
+            display: flex; align-items: center; gap: 15px;
+            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(20px);
             padding: 10px 15px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
         #nav-bar { display: flex; gap: 10px; }
-        
-        .nav-btn { 
-            position: relative; padding: 12px 25px; border: none; background: rgba(255,255,255,0.1); 
-            color: #fff; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 11px; 
+
+        .nav-btn {
+            position: relative; padding: 12px 25px; border: none; background: rgba(255,255,255,0.1);
+            color: #fff; cursor: pointer; border-radius: 14px; font-weight: 700; font-size: 11px;
             transition: all 0.2s; opacity: 0.2; white-space: nowrap;
         }
 
@@ -77,6 +87,40 @@
         }
 
         canvas { display: block; width: 100vw; height: 100vh; outline: none; }
+
+        /* ---- Compare mode overlay ---- */
+        #compare-overlay {
+            position: absolute; inset: 0; z-index: 50;
+            display: none; pointer-events: none;
+        }
+        #compare-overlay.active { display: block; }
+
+        .compare-label {
+            position: absolute; top: 100px; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); color: #fff; padding: 7px 16px;
+            border-radius: 12px; font-size: 12px; font-weight: 700;
+            white-space: nowrap; pointer-events: none; backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .slider-handle {
+            position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.9);
+            cursor: ew-resize; pointer-events: all; box-shadow: 0 0 12px rgba(0,0,0,0.5);
+            touch-action: none;
+        }
+        .slider-handle::after {
+            content: '\21D4'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            width: 38px; height: 38px; background: #fff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #007aff; font-size: 16px; font-weight: 900; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+        }
+
+        #compare-loading {
+            position: absolute; inset: 0; z-index: 60; display: none;
+            align-items: center; justify-content: center; background: rgba(0,0,0,0.55);
+            color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 0.3px;
+        }
+        #compare-loading.active { display: flex; }
     </style>
 </head>
 <body>
@@ -94,6 +138,9 @@
             </div>
         </div>
         <div class="header-right">
+            <button id="compare-toggle" class="compare-toggle-btn" onclick="toggleCompareMode()">
+                Compare: ASP / SatSplat-Diffusion / Skyfall-GS
+            </button>
             <div class="logo-stack">
                 <img src="qinlab_white_400x400.png" alt="Qin Lab Logo" class="gda">
             </div>
@@ -107,6 +154,15 @@
         </div>
     </div>
 
+    <div id="compare-overlay">
+        <div class="compare-label" id="label-0">ASP</div>
+        <div class="compare-label" id="label-1">SatSplat-Diffusion</div>
+        <div class="compare-label" id="label-2">Skyfall-GS</div>
+        <div class="slider-handle" id="handle-0"></div>
+        <div class="slider-handle" id="handle-1"></div>
+    </div>
+    <div id="compare-loading">Loading comparison scenes…</div>
+
     <canvas id="mainCanvas"></canvas>
 
     <script type="module">
@@ -118,7 +174,7 @@
         const BASE_URL = "https://huggingface.co/datasets/jiyong1591/SatSplatDiffusion/resolve/main";
 
         const urlParams = new URLSearchParams(window.location.search);
-        
+
         const fullConfig = [
             { id: "asp", name: "ASP" },
             { id: "step1", name: "SatSplat" },
@@ -144,7 +200,7 @@
         function renderSiteSelector() {
             const selector = document.getElementById("site-selector");
             selector.innerHTML = "";
-            
+
             let listToRender = [...defaultSites];
             if (initialSiteParam && !listToRender.includes(initialSiteParam)) {
                 listToRender.push(initialSiteParam);
@@ -222,8 +278,8 @@
 
         async function updateSite(site) {
             currentSite = site;
-            
-            document.querySelectorAll('.nav-btn').forEach(b => { 
+
+            document.querySelectorAll('.nav-btn').forEach(b => {
                 b.disabled = true; b.className = "nav-btn"; b.style.opacity = "0.2";
                 const pb = b.querySelector('.progress-bar');
                 if (pb) pb.style.width = '0%';
@@ -234,14 +290,14 @@
                 if (currentSite !== site) break;
 
                 const loadedScene = await loadSingleModel(site, typeObj.id);
-                
+
                 if (currentSite === site && loadedScene) {
                     const btn = document.getElementById(`btn-${typeObj.id}`);
                     if (btn) {
                         btn.disabled = false;
                         btn.style.opacity = "0.6";
                     }
-                    
+
                     if (isFirst) {
                         currentScene = loadedScene;
                         switchType(typeObj.id);
@@ -266,7 +322,128 @@
             }
         };
 
-        window.changeSite = (e) => updateSite(e.target.value);
+        // =====================================================================
+        // Compare Mode: splits the canvas into 3 regions with two drag sliders,
+        // rendering ASP / SatSplat-Diffusion / Skyfall-GS simultaneously via
+        // WebGL scissor clipping. Fully separate from the single-view nav
+        // button logic above so neither path interferes with the other.
+        // =====================================================================
+
+        const compareTypes = ["asp", "step2", "skyfall"]; // ASP / SatSplat-Diffusion / Skyfall-GS
+        let compareMode = false;
+        let sliderFracs = [0.333, 0.667];
+        let draggingHandle = null;
+        let glContext = null;
+
+        function getGL() {
+            if (!glContext) {
+                const canvas = document.getElementById("mainCanvas");
+                glContext = canvas.getContext("webgl2") || canvas.getContext("webgl");
+            }
+            return glContext;
+        }
+
+        window.toggleCompareMode = async () => {
+            const btn = document.getElementById("compare-toggle");
+            const overlay = document.getElementById("compare-overlay");
+            const loading = document.getElementById("compare-loading");
+            const navContainer = document.getElementById("nav-container");
+
+            if (compareMode) {
+                compareMode = false;
+                btn.classList.remove("active");
+                btn.textContent = "Compare: ASP / SatSplat-Diffusion / Skyfall-GS";
+                overlay.classList.remove("active");
+                navContainer.style.display = "";
+                const fallbackType = currentTypes.find(t => scenes[`${currentSite}_${t.id}`]);
+                if (fallbackType) switchType(fallbackType.id);
+                return;
+            }
+
+            loading.classList.add("active");
+            await Promise.all(compareTypes.map(t => loadSingleModel(currentSite, t)));
+            loading.classList.remove("active");
+
+            const missing = compareTypes.filter(t => !scenes[`${currentSite}_${t}`]);
+            if (missing.length > 0) {
+                alert(`Some scenes failed to load for compare mode: ${missing.join(", ")}`);
+                return;
+            }
+
+            compareMode = true;
+            btn.classList.add("active");
+            btn.textContent = "Exit Compare Mode";
+            overlay.classList.add("active");
+            navContainer.style.display = "none";
+            updateCompareLabels();
+        };
+
+        function updateCompareLabels() {
+            const w = window.innerWidth;
+            const x0 = sliderFracs[0] * w;
+            const x1 = sliderFracs[1] * w;
+            document.getElementById("handle-0").style.left = `${x0}px`;
+            document.getElementById("handle-1").style.left = `${x1}px`;
+            document.getElementById("label-0").style.left = `${x0 / 2}px`;
+            document.getElementById("label-1").style.left = `${(x0 + x1) / 2}px`;
+            document.getElementById("label-2").style.left = `${(x1 + w) / 2}px`;
+        }
+
+        function setupSliderDrag() {
+            [0, 1].forEach(idx => {
+                const handle = document.getElementById(`handle-${idx}`);
+                handle.addEventListener("pointerdown", (e) => {
+                    draggingHandle = idx;
+                    handle.setPointerCapture(e.pointerId);
+                });
+            });
+            window.addEventListener("pointermove", (e) => {
+                if (draggingHandle === null) return;
+                const w = window.innerWidth;
+                let frac = Math.min(1, Math.max(0, e.clientX / w));
+                const margin = 0.04;
+                if (draggingHandle === 0) {
+                    frac = Math.min(frac, sliderFracs[1] - margin);
+                    frac = Math.max(frac, margin);
+                } else {
+                    frac = Math.max(frac, sliderFracs[0] + margin);
+                    frac = Math.min(frac, 1 - margin);
+                }
+                sliderFracs[draggingHandle] = frac;
+                updateCompareLabels();
+            });
+            window.addEventListener("pointerup", () => { draggingHandle = null; });
+        }
+
+        function renderCompareFrame() {
+            const gl = getGL();
+            if (!gl) return;
+            const canvas = document.getElementById("mainCanvas");
+            const w = canvas.width, h = canvas.height;
+            const xBounds = [0, Math.round(sliderFracs[0] * w), Math.round(sliderFracs[1] * w), w];
+
+            gl.enable(gl.SCISSOR_TEST);
+            for (let i = 0; i < 3; i++) {
+                const sx = xBounds[i], ex = xBounds[i + 1];
+                if (ex <= sx) continue;
+                gl.scissor(sx, 0, ex - sx, h);
+                const key = `${currentSite}_${compareTypes[i]}`;
+                const scene = scenes[key];
+                if (scene) renderer.render(scene, camera);
+            }
+            gl.disable(gl.SCISSOR_TEST);
+        }
+
+        window.changeSite = async (e) => {
+            const site = e.target.value;
+            await updateSite(site);
+            if (compareMode) {
+                const loading = document.getElementById("compare-loading");
+                loading.classList.add("active");
+                await Promise.all(compareTypes.map(t => loadSingleModel(site, t)));
+                loading.classList.remove("active");
+            }
+        };
 
         async function main() {
             renderSiteSelector();
@@ -277,12 +454,20 @@
             controls = new SPLAT.OrbitControls(camera, canvas);
             camera.position = new SPLAT.Vector3(1.5, -0.8, 0.5);
             controls.setCameraTarget(new SPLAT.Vector3(0, 0, 0));
-            const resize = () => renderer.setSize(window.innerWidth, window.innerHeight, 1.0);
+            const resize = () => {
+                renderer.setSize(window.innerWidth, window.innerHeight, 1.0);
+                if (compareMode) updateCompareLabels();
+            };
             window.addEventListener("resize", resize);
             resize();
+            setupSliderDrag();
             const frame = () => {
                 controls.update();
-                if (currentScene) renderer.render(currentScene, camera);
+                if (compareMode) {
+                    renderCompareFrame();
+                } else if (currentScene) {
+                    renderer.render(currentScene, camera);
+                }
                 requestAnimationFrame(frame);
             };
             requestAnimationFrame(frame);
