@@ -120,6 +120,22 @@
             border: 1px solid rgba(255,255,255,0.15);
         }
 
+        .region-status {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.65); color: #fff; padding: 10px 18px;
+            border-radius: 12px; font-size: 12px; font-weight: 600;
+            white-space: nowrap; pointer-events: none; backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15); display: none;
+            align-items: center; gap: 10px;
+        }
+        .region-status.visible { display: flex; }
+        .region-status::before {
+            content: ''; width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.25); border-top-color: #007aff;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .slider-handle {
             position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.9);
             cursor: ew-resize; pointer-events: all; box-shadow: 0 0 12px rgba(0,0,0,0.5);
@@ -132,12 +148,7 @@
             color: #007aff; font-size: 16px; font-weight: 900; box-shadow: 0 4px 14px rgba(0,0,0,0.5);
         }
 
-        #compare-loading {
-            position: absolute; inset: 0; z-index: 60; display: none;
-            align-items: center; justify-content: center; background: rgba(0,0,0,0.55);
-            color: #fff; font-size: 14px; font-weight: 600; letter-spacing: 0.3px;
-        }
-        #compare-loading.active { display: flex; }
+
     </style>
 </head>
 <body>
@@ -188,10 +199,12 @@
         <div class="compare-label" id="label-0">ASP</div>
         <div class="compare-label" id="label-1">SatSplat-Diffusion</div>
         <div class="compare-label" id="label-2">Skyfall-GS</div>
+        <div class="region-status" id="status-0">Loading ASP…</div>
+        <div class="region-status" id="status-1">Loading SatSplat-Diffusion…</div>
+        <div class="region-status" id="status-2">Loading Skyfall-GS…</div>
         <div class="slider-handle" id="handle-0"></div>
         <div class="slider-handle" id="handle-1"></div>
     </div>
-    <div id="compare-loading">Loading comparison scenes…</div>
 
     <script type="module">
         import * as SPLAT from "https://cdn.jsdelivr.net/npm/gsplat@latest";
@@ -366,7 +379,6 @@
 
         window.toggleCompareMode = async () => {
             const btn = document.getElementById("compare-toggle");
-            const loading = document.getElementById("compare-loading");
             const navContainer = document.getElementById("nav-container");
 
             if (compareMode) {
@@ -380,16 +392,6 @@
                 return;
             }
 
-            loading.classList.add("active");
-            await Promise.all(compareTypes.map(t => loadSingleModel(currentSite, t)));
-            loading.classList.remove("active");
-
-            const missing = compareTypes.filter(t => !scenes[`${currentSite}_${t}`]);
-            if (missing.length > 0) {
-                alert(`Some scenes failed to load for compare mode: ${missing.join(", ")}`);
-                return;
-            }
-
             compareMode = true;
             document.body.classList.add("compare-active");
             btn.classList.add("active");
@@ -397,6 +399,27 @@
             navContainer.style.display = "none";
             resizeCompareRenderers();
             updateCompareLayout();
+
+            // Load each region's scene independently — don't block the whole
+            // compare view on the slowest download. Each panel shows its own
+            // spinner until its specific scene is ready.
+            const loadSite = currentSite;
+            compareTypes.forEach((type, i) => {
+                const statusEl = document.getElementById(`status-${i}`);
+                const key = `${loadSite}_${type}`;
+                if (scenes[key]) {
+                    statusEl.classList.remove("visible");
+                    return;
+                }
+                statusEl.classList.add("visible");
+                loadSingleModel(loadSite, type).then(scene => {
+                    if (currentSite !== loadSite) return; // site changed mid-load
+                    statusEl.textContent = scene
+                        ? statusEl.textContent
+                        : `Failed to load ${["ASP", "SatSplat-Diffusion", "Skyfall-GS"][i]}`;
+                    if (scene) statusEl.classList.remove("visible");
+                });
+            });
         };
 
         function resizeCompareRenderers() {
@@ -413,6 +436,9 @@
             document.getElementById("label-0").style.left = `${x0 / 2}px`;
             document.getElementById("label-1").style.left = `${(x0 + x1) / 2}px`;
             document.getElementById("label-2").style.left = `${(x1 + w) / 2}px`;
+            document.getElementById("status-0").style.left = `${x0 / 2}px`;
+            document.getElementById("status-1").style.left = `${(x0 + x1) / 2}px`;
+            document.getElementById("status-2").style.left = `${(x1 + w) / 2}px`;
 
             // clip-path insets are measured inward from each edge of the element's own box
             const c0 = document.getElementById("compareCanvas-0");
@@ -462,10 +488,22 @@
             const site = e.target.value;
             await updateSite(site);
             if (compareMode) {
-                const loading = document.getElementById("compare-loading");
-                loading.classList.add("active");
-                await Promise.all(compareTypes.map(t => loadSingleModel(site, t)));
-                loading.classList.remove("active");
+                const loadSite = site;
+                compareTypes.forEach((type, i) => {
+                    const statusEl = document.getElementById(`status-${i}`);
+                    const key = `${loadSite}_${type}`;
+                    if (scenes[key]) {
+                        statusEl.classList.remove("visible");
+                        return;
+                    }
+                    statusEl.textContent = `Loading ${["ASP", "SatSplat-Diffusion", "Skyfall-GS"][i]}…`;
+                    statusEl.classList.add("visible");
+                    loadSingleModel(loadSite, type).then(scene => {
+                        if (currentSite !== loadSite) return;
+                        if (scene) statusEl.classList.remove("visible");
+                        else statusEl.textContent = `Failed to load ${["ASP", "SatSplat-Diffusion", "Skyfall-GS"][i]}`;
+                    });
+                });
             }
         };
 
