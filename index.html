@@ -222,22 +222,26 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const isDiffVer = urlParams.get("satsplatdiff_ver") === "true";
+        const isSatSplatVer = urlParams.get("satsplat_ver") === "true";
+        const isPipelineVer = isDiffVer || isSatSplatVer;
 
-        if (isDiffVer) {
-            const diffTitle = "SatSplatDiff: Geometrically-Preserving Generative Refinement for High-Fidelity Satellite Gaussian Splatting";
-            document.title = diffTitle;
+        if (isPipelineVer) {
+            const pageTitle = isDiffVer
+                ? "SatSplatDiff: Geometrically-Preserving Generative Refinement for High-Fidelity Satellite Gaussian Splatting"
+                : "SatSplat: Geometrically-Accurate Gaussian Splatting for Satellite Imagery";
+
+            document.title = pageTitle;
             const h1 = document.querySelector("#header h1");
             if (h1) {
-                h1.textContent = diffTitle;
+                h1.textContent = pageTitle;
                 h1.classList.add("long-title");
             }
 
             const authorsEl = document.querySelector(".authors");
             if (authorsEl) {
-                authorsEl.innerHTML =
-                    '<span>Jiyong Kim<sup>1</sup></span>' +
-                    '<span>Shuang Song<sup>1</sup></span>' +
-                    '<span>Rongjun Qin<sup>&dagger;</sup></span>';
+                authorsEl.innerHTML = isDiffVer
+                    ? '<span>Jiyong Kim<sup>1</sup></span><span>Shuang Song<sup>1</sup></span><span>Rongjun Qin<sup>&dagger;</sup></span>'
+                    : '<span>Shuang Song<sup>1</sup></span><span>Jiyong Kim<sup>1</sup></span><span>Rongjun Qin<sup>&dagger;</sup></span>';
             }
             const affiliationBox = document.querySelector(".affiliation-box");
             if (affiliationBox) {
@@ -256,6 +260,9 @@
             { id: "step1", label: "<span class=\"line\">2. Geometric</span><span class=\"line\">Optimization</span>" },
             { id: "step2", label: "<span class=\"line\">3. Shadow-Guided</span><span class=\"line\">Generative Refinement</span>" },
             { id: "skyfall", label: "Skyfall-GS" }
+        ] : isSatSplatVer ? [
+            { id: "asp", label: "ASP" },
+            { id: "step1", label: "SatSplat" }
         ] : [
             { id: "asp", label: "ASP" },
             { id: "step1", label: "SatSplat" },
