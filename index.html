@@ -256,9 +256,9 @@
         }
         
         const fullConfig = isDiffVer ? [
-            { id: "step2", label: "<span class=\"line\">3. Shadow-Guided</span><span class=\"line\">Generative Refinement</span>" },
-            { id: "step1", label: "<span class=\"line\">2. Geometric</span><span class=\"line\">Optimization</span>" },
             { id: "asp", label: "<span class=\"line\">1. Photogrammetric</span><span class=\"line\">Initialization</span>" },
+            { id: "step1", label: "<span class=\"line\">2. Geometric</span><span class=\"line\">Optimization</span>" },
+            { id: "step2", label: "<span class=\"line\">3. Shadow-Guided</span><span class=\"line\">Generative Refinement</span>" },
             { id: "skyfall", label: "Skyfall-GS" }
         ] : isSatSplatVer ? [
             { id: "asp", label: "ASP" },
@@ -370,26 +370,35 @@
 
         async function updateSite(site) {
             currentSite = site;
-
+        
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.disabled = true; b.className = "nav-btn"; b.style.opacity = "0.2";
                 const pb = b.querySelector('.progress-bar');
                 if (pb) pb.style.width = '0%';
             });
-
+        
+            // Determine load order: for diff version, load step2 first regardless of display order
+            let loadOrder = currentTypes;
+            if (isDiffVer) {
+                const idOrder = ["step2", "step1", "asp", "skyfall"];
+                loadOrder = idOrder
+                    .map(id => currentTypes.find(t => t.id === id))
+                    .filter(Boolean);
+            }
+        
             let isFirst = true;
-            for (const typeObj of currentTypes) {
+            for (const typeObj of loadOrder) {
                 if (currentSite !== site) break;
-
+        
                 const loadedScene = await loadSingleModel(site, typeObj.id);
-
+        
                 if (currentSite === site && loadedScene) {
                     const btn = document.getElementById(`btn-${typeObj.id}`);
                     if (btn) {
                         btn.disabled = false;
                         btn.style.opacity = "0.6";
                     }
-
+        
                     if (isFirst) {
                         currentScene = loadedScene;
                         switchType(typeObj.id);
@@ -398,7 +407,6 @@
                 }
             }
         }
-
         window.switchType = (type) => {
             const key = `${currentSite}_${type}`;
             if (!scenes[key]) return;
