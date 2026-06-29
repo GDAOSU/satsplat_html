@@ -254,11 +254,11 @@
             const compareBtn = document.getElementById("compare-toggle");
             if (compareBtn) compareBtn.style.display = "none";
         }
-
+        
         const fullConfig = isDiffVer ? [
-            { id: "asp", label: "<span class=\"line\">1. Photogrammetric</span><span class=\"line\">Initialization</span>" },
-            { id: "step1", label: "<span class=\"line\">2. Geometric</span><span class=\"line\">Optimization</span>" },
             { id: "step2", label: "<span class=\"line\">3. Shadow-Guided</span><span class=\"line\">Generative Refinement</span>" },
+            { id: "step1", label: "<span class=\"line\">2. Geometric</span><span class=\"line\">Optimization</span>" },
+            { id: "asp", label: "<span class=\"line\">1. Photogrammetric</span><span class=\"line\">Initialization</span>" },
             { id: "skyfall", label: "Skyfall-GS" }
         ] : isSatSplatVer ? [
             { id: "asp", label: "ASP" },
