@@ -283,7 +283,7 @@
             "OMA_203", "OMA_212", "OMA_315",
             "IARPA_001", "IARPA_002", "IARPA_003"
         ];
-        let initialSiteParam = urlParams.get("site") || "JAX_280";
+        let initialSiteParam = urlParams.get("site") || "JAX_068";
 
         if (initialSiteParam && !initialSiteParam.includes("_") && /^\d+$/.test(initialSiteParam)) {
             initialSiteParam = initialSiteParam;
@@ -595,7 +595,7 @@
                     renderCompareFrame();
                 } else if (currentScene) {
                     mainRenderer.render(currentScene, camera);
-                }
+          Loading
                 requestAnimationFrame(frame);
             };
             requestAnimationFrame(frame);
