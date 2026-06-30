@@ -254,7 +254,7 @@
             const compareBtn = document.getElementById("compare-toggle");
             if (compareBtn) compareBtn.style.display = "none";
         }
-        
+
         const fullConfig = isDiffVer ? [
             { id: "asp", label: "<span class=\"line\">1. Photogrammetric</span><span class=\"line\">Initialization</span>" },
             { id: "step1", label: "<span class=\"line\">2. Geometric</span><span class=\"line\">Optimization</span>" },
@@ -370,13 +370,13 @@
 
         async function updateSite(site) {
             currentSite = site;
-        
+
             document.querySelectorAll('.nav-btn').forEach(b => {
                 b.disabled = true; b.className = "nav-btn"; b.style.opacity = "0.2";
                 const pb = b.querySelector('.progress-bar');
                 if (pb) pb.style.width = '0%';
             });
-        
+
             // Determine load order: for diff version, load step2 first regardless of display order
             let loadOrder = currentTypes;
             if (isDiffVer) {
@@ -385,20 +385,20 @@
                     .map(id => currentTypes.find(t => t.id === id))
                     .filter(Boolean);
             }
-        
+
             let isFirst = true;
             for (const typeObj of loadOrder) {
                 if (currentSite !== site) break;
-        
+
                 const loadedScene = await loadSingleModel(site, typeObj.id);
-        
+
                 if (currentSite === site && loadedScene) {
                     const btn = document.getElementById(`btn-${typeObj.id}`);
                     if (btn) {
                         btn.disabled = false;
                         btn.style.opacity = "0.6";
                     }
-        
+
                     if (isFirst) {
                         currentScene = loadedScene;
                         switchType(typeObj.id);
@@ -595,7 +595,7 @@
                     renderCompareFrame();
                 } else if (currentScene) {
                     mainRenderer.render(currentScene, camera);
-          Loading
+                }
                 requestAnimationFrame(frame);
             };
             requestAnimationFrame(frame);
