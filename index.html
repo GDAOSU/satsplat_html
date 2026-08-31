@@ -147,6 +147,32 @@
             cursor: ew-resize; pointer-events: all; box-shadow: 0 0 12px rgba(0,0,0,0.5);
             touch-action: none;
         }
+        .tile-caption {
+            font-size: 10.5px; font-weight: 500; color: #bbb; white-space: nowrap;
+            padding: 0 10px 0 2px; border-right: 1px solid rgba(255,255,255,0.15); margin-right: 4px;
+            line-height: 1.4; text-align: left;
+        }
+        .tile-caption b { color: #fff; font-weight: 800; font-size: 11.5px; }
+        .tile-caption .hint { color: #ffb454; font-weight: 600; }
+        #site-selector:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .large-area-btn {
+            display: flex; flex-direction: row; align-items: center; justify-content: center;
+            gap: 10px; padding: 8px 18px; border-radius: 16px; cursor: pointer;
+            background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,149,0,0.6); box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            color: #ffb454; transition: all 0.2s; white-space: nowrap; line-height: 1.2;
+        }
+        .large-area-btn .la-title::before {
+            content: '\229E'; margin-right: 7px; font-size: 14px; vertical-align: -1px;
+        }
+        .large-area-btn:hover { background: rgba(255,149,0,0.25); }
+        .large-area-btn.active { background: #ff9500; border-color: #ff9500; color: #fff; box-shadow: 0 5px 15px rgba(255,149,0,0.35); }
+        .large-area-btn .la-title { font-size: 13px; font-weight: 800; }
+        .large-area-btn .la-sub { font-size: 11px; font-weight: 500; opacity: 0.85; color: #ddd; }
+        .large-area-btn.active .la-sub { color: #fff; }
+        .large-area-btn.active .la-sub { opacity: 0.95; }
+
         .slider-handle::after {
             content: '\21D4'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
             width: 38px; height: 38px; background: #fff; border-radius: 50%;
@@ -182,6 +208,11 @@
     </div>
 
     <div id="nav-container">
+        <button id="larger-toggle" class="large-area-btn" onclick="toggleLargerSite()"
+                title="Show four neighbouring sites (JAX_164/165/166/167) side by side. Each site was reconstructed on its own, then cropped along Voronoi boundaries and placed in one shared coordinate frame.">
+            <span class="la-title">Large Area</span>
+            <span class="la-sub">4 neighbouring sites stitched into one scene (JAX_164&ndash;167)</span>
+        </button>
         <div class="controls-wrapper">
             <select id="site-selector" onchange="changeSite(event)"></select>
             <div id="nav-bar"></div>
@@ -399,7 +430,7 @@
                         btn.style.opacity = "0.6";
                     }
 
-                    if (isFirst) {
+                    if (isFirst && !largerMode) {
                         currentScene = loadedScene;
                         switchType(typeObj.id);
                         isFirst = false;
@@ -408,6 +439,7 @@
             }
         }
         window.switchType = (type) => {
+            if (largerMode) return;
             const key = `${currentSite}_${type}`;
             if (!scenes[key]) return;
             currentScene = scenes[key];
@@ -419,6 +451,169 @@
             if (activeBtn) {
                 activeBtn.classList.add('active');
                 activeBtn.style.opacity = "1";
+            }
+        };
+
+        // =====================================================================
+        // Larger Site mode: JAX_164/165/166/167 SatSplatDiff (Step 2) results,
+        // Voronoi-tiled in UTM and re-normalised into ONE shared NDC frame
+        // (see tools/tile_voronoi_ndc.py). Tiles are already aligned, so they
+        // are NOT re-centred here. Each tile is a separate Splat object that is
+        // added to / removed from a single shared Scene, so the viewer can
+        // toggle tiles individually to show the seamless boundaries.
+        // =====================================================================
+
+        const TILE_SITES = ["JAX_164", "JAX_165", "JAX_166", "JAX_167"];
+        const TILE_SUFFIX = "tile_step2";
+        const TILE_ROTATION = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
+        const tileScene = new SPLAT.Scene();
+        const tileSplats = {};     // site -> Splat (loaded once, cached)
+        const tileActive = {};     // site -> bool (currently shown)
+        let largerMode = false;
+        let largerToken = 0;       // invalidates in-flight sequential loads on exit
+
+        function tileUrl(site) {
+            return `${BASE_URL}/${site}_${TILE_SUFFIX}.ply?download=true`;
+        }
+
+        async function loadTile(site, onProgress) {
+            if (tileSplats[site]) return tileSplats[site];
+            const staging = new SPLAT.Scene();
+            const splat = await SPLAT.PLYLoader.LoadAsync(tileUrl(site), staging, onProgress);
+            splat.rotation = TILE_ROTATION;    // same z-up -> viewer convention as single sites
+            staging.removeObject(splat);
+            tileSplats[site] = splat;
+            return splat;
+        }
+
+        function clearMainCanvas() {
+            const gl = mainRenderer && mainRenderer.gl;
+            if (!gl) return;
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        }
+
+        function refreshTileButtons() {
+            TILE_SITES.forEach(site => {
+                const btn = document.getElementById(`tile-btn-${site}`);
+                if (!btn) return;
+                const loaded = !!tileSplats[site];
+                btn.disabled = !loaded;
+                btn.classList.toggle("active", loaded && !!tileActive[site]);
+                btn.style.opacity = !loaded ? "0.2" : (tileActive[site] ? "1" : "0.6");
+            });
+        }
+
+        function setTile(site, on) {
+            const splat = tileSplats[site];
+            if (!splat) return;
+            const inScene = tileScene.objects.indexOf(splat) >= 0;
+            if (on && !inScene) {
+                tileScene.addObject(splat);
+            } else if (!on && inScene) {
+                if (tileScene.objects.length === 1) {
+                    // Removing the last splat would make the bound renderer rebuild
+                    // an empty (0-vertex) texture set; unbind it first.
+                    currentScene = null;
+                    if (mainRenderer) mainRenderer.dispose();
+                }
+                tileScene.removeObject(splat);
+            }
+            tileActive[site] = on;
+            if (largerMode) {
+                if (tileScene.objects.length > 0) {
+                    currentScene = tileScene;
+                } else {
+                    currentScene = null;       // nothing to draw; wipe the last frame
+                    clearMainCanvas();
+                }
+            }
+            refreshTileButtons();
+        }
+        window.toggleTile = (site) => setTile(site, !tileActive[site]);
+        window.setAllTiles = (on) => TILE_SITES.forEach(site => setTile(site, on));
+
+        function renderTileButtons() {
+            const navBar = document.getElementById("nav-bar");
+            navBar.innerHTML = "";
+            const cap = document.createElement("div");
+            cap.className = "tile-caption";
+            cap.innerHTML = "<b>Large Area &middot; SatSplatDiff</b><br>" +
+                "4 sites reconstructed separately, cropped along Voronoi borders<br>" +
+                "<span class=\"hint\">Click a tile to hide / show it and inspect the seams</span>";
+            navBar.appendChild(cap);
+            TILE_SITES.forEach(site => {
+                const btn = document.createElement("button");
+                btn.id = `tile-btn-${site}`;
+                btn.className = "nav-btn";
+                btn.disabled = true;
+                btn.onclick = () => toggleTile(site);
+                btn.innerHTML = `${site}<div class="progress-bar"></div>`;
+                navBar.appendChild(btn);
+            });
+            const all = document.createElement("button");
+            all.id = "tile-btn-all";
+            all.className = "nav-btn";
+            all.style.opacity = "0.6";
+            all.onclick = () => {
+                const anyOff = TILE_SITES.some(s => tileSplats[s] && !tileActive[s]);
+                setAllTiles(anyOff);
+            };
+            all.innerHTML = `All<div class="progress-bar"></div>`;
+            navBar.appendChild(all);
+            refreshTileButtons();
+        }
+
+        window.toggleLargerSite = async () => {
+            const btn = document.getElementById("larger-toggle");
+            const selector = document.getElementById("site-selector");
+            const compareBtn = document.getElementById("compare-toggle");
+
+            if (largerMode) {
+                // ---- exit: restore the single-site UI ----
+                largerMode = false;
+                largerToken++;
+                btn.classList.remove("active");
+                btn.innerHTML = '<span class="la-title">Large Area</span><span class="la-sub">4 neighbouring sites stitched into one scene (JAX_164&ndash;167)</span>';
+                selector.disabled = false;
+                if (compareBtn && !isPipelineVer) compareBtn.style.display = "";
+                renderNavButtons();
+                currentScene = null;
+                await updateSite(currentSite);   // cached scenes -> instant
+                return;
+            }
+
+            // ---- enter ----
+            if (compareMode) toggleCompareMode();
+            largerMode = true;
+            const token = ++largerToken;
+            btn.classList.add("active");
+            btn.innerHTML = '<span class="la-title">Large Area</span><span class="la-sub">Viewing JAX_164&ndash;167 stitched &middot; click to return to single sites</span>';
+            selector.disabled = true;
+            if (compareBtn) compareBtn.style.display = "none";
+            renderTileButtons();
+
+            // Keep whatever is already active; everything loaded before is shown
+            if (tileScene.objects.length > 0) currentScene = tileScene;
+
+            // Load tiles one after another and switch each on as it arrives,
+            // so the mosaic visibly grows tile by tile.
+            for (const site of TILE_SITES) {
+                if (token !== largerToken) return;
+                const tbtn = document.getElementById(`tile-btn-${site}`);
+                const pb = tbtn ? tbtn.querySelector(".progress-bar") : null;
+                if (tbtn) tbtn.style.opacity = "0.5";
+                try {
+                    await loadTile(site, (progress) => {
+                        if (pb && token === largerToken) pb.style.width = `${Math.min(70, progress * 70)}%`;
+                    });
+                } catch (err) {
+                    console.error(`Tile load failed: ${site}`, err);
+                    continue;
+                }
+                if (pb) pb.style.width = "0%";
+                if (token !== largerToken) return;
+                setTile(site, true);
             }
         };
 
@@ -451,6 +646,7 @@
                 return;
             }
 
+            if (largerMode) return;
             compareMode = true;
             document.body.classList.add("compare-active");
             btn.classList.add("active");
@@ -545,6 +741,7 @@
 
         window.changeSite = async (e) => {
             const site = e.target.value;
+            if (largerMode) { e.target.value = currentSite; return; }
             await updateSite(site);
             if (compareMode) {
                 const loadSite = site;
@@ -599,7 +796,11 @@
                 requestAnimationFrame(frame);
             };
             requestAnimationFrame(frame);
-            if (currentSite) updateSite(currentSite);
+            if (urlParams.get("larger") === "true" || urlParams.get("site") === "LARGER") {
+                toggleLargerSite();
+            } else if (currentSite) {
+                updateSite(currentSite);
+            }
         }
         main();
     </script>
