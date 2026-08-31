@@ -154,6 +154,10 @@
         }
         .tile-caption b { color: #fff; font-weight: 800; font-size: 11.5px; }
         .tile-caption .hint { color: #ffb454; font-weight: 600; }
+        .tile-group { display: flex; gap: 6px; align-items: center; }
+        .tile-method-btn { padding: 8px 12px 12px; font-size: 10.5px; }
+        .tile-method-btn.active { background: #ff9500; color: #fff; box-shadow: 0 5px 15px rgba(255,149,0,0.3); }
+        .tile-sep { width: 1px; align-self: stretch; background: rgba(255,255,255,0.15); margin: 0 4px; }
         #site-selector:disabled { opacity: 0.35; cursor: not-allowed; }
 
         .large-area-btn {
@@ -464,25 +468,31 @@
         // =====================================================================
 
         const TILE_SITES = ["JAX_164", "JAX_165", "JAX_166", "JAX_167"];
-        const TILE_SUFFIX = "tile_step2";
+        const TILE_METHODS = [
+            { id: "asp",   label: "ASP" },
+            { id: "step1", label: "SatSplat" },
+            { id: "step2", label: "SatSplatDiff" }
+        ];
         const TILE_ROTATION = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(Math.PI / 2, 0, 0));
         const tileScene = new SPLAT.Scene();
-        const tileSplats = {};     // site -> Splat (loaded once, cached)
-        const tileActive = {};     // site -> bool (currently shown)
+        const tileSplats = {};     // `${site}_${method}` -> Splat (loaded once, cached)
+        const tileActive = {};     // site -> bool (tile currently shown)
+        let tileMethod = "step2";  // which method layer is displayed
         let largerMode = false;
-        let largerToken = 0;       // invalidates in-flight sequential loads on exit
+        let largerToken = 0;       // invalidates in-flight sequential loads
 
-        function tileUrl(site) {
-            return `${BASE_URL}/${site}_${TILE_SUFFIX}.ply?download=true`;
+        function tileUrl(site, method) {
+            return `${BASE_URL}/${site}_tile_${method}.ply?download=true`;
         }
 
-        async function loadTile(site, onProgress) {
-            if (tileSplats[site]) return tileSplats[site];
+        async function loadTile(site, method, onProgress) {
+            const key = `${site}_${method}`;
+            if (tileSplats[key]) return tileSplats[key];
             const staging = new SPLAT.Scene();
-            const splat = await SPLAT.PLYLoader.LoadAsync(tileUrl(site), staging, onProgress);
+            const splat = await SPLAT.PLYLoader.LoadAsync(tileUrl(site, method), staging, onProgress);
             splat.rotation = TILE_ROTATION;    // same z-up -> viewer convention as single sites
             staging.removeObject(splat);
-            tileSplats[site] = splat;
+            tileSplats[key] = splat;
             return splat;
         }
 
@@ -493,33 +503,18 @@
             gl.clear(gl.COLOR_BUFFER_BIT);
         }
 
-        function refreshTileButtons() {
-            TILE_SITES.forEach(site => {
-                const btn = document.getElementById(`tile-btn-${site}`);
-                if (!btn) return;
-                const loaded = !!tileSplats[site];
-                btn.disabled = !loaded;
-                btn.classList.toggle("active", loaded && !!tileActive[site]);
-                btn.style.opacity = !loaded ? "0.2" : (tileActive[site] ? "1" : "0.6");
-            });
+        function safeRemoveFromTileScene(splat) {
+            if (tileScene.objects.indexOf(splat) < 0) return;
+            if (tileScene.objects.length === 1) {
+                // Removing the last splat would make the bound renderer rebuild
+                // an empty (0-vertex) texture set; unbind it first.
+                currentScene = null;
+                if (mainRenderer) mainRenderer.dispose();
+            }
+            tileScene.removeObject(splat);
         }
 
-        function setTile(site, on) {
-            const splat = tileSplats[site];
-            if (!splat) return;
-            const inScene = tileScene.objects.indexOf(splat) >= 0;
-            if (on && !inScene) {
-                tileScene.addObject(splat);
-            } else if (!on && inScene) {
-                if (tileScene.objects.length === 1) {
-                    // Removing the last splat would make the bound renderer rebuild
-                    // an empty (0-vertex) texture set; unbind it first.
-                    currentScene = null;
-                    if (mainRenderer) mainRenderer.dispose();
-                }
-                tileScene.removeObject(splat);
-            }
-            tileActive[site] = on;
+        function syncTileSceneVisibility() {
             if (largerMode) {
                 if (tileScene.objects.length > 0) {
                     currentScene = tileScene;
@@ -530,18 +525,107 @@
             }
             refreshTileButtons();
         }
-        window.toggleTile = (site) => setTile(site, !tileActive[site]);
+
+        function refreshTileButtons() {
+            TILE_SITES.forEach(site => {
+                const btn = document.getElementById(`tile-btn-${site}`);
+                if (!btn) return;
+                const loaded = !!tileSplats[`${site}_${tileMethod}`];
+                btn.disabled = !loaded;
+                btn.classList.toggle("active", loaded && !!tileActive[site]);
+                btn.style.opacity = !loaded ? "0.2" : (tileActive[site] ? "1" : "0.6");
+            });
+            TILE_METHODS.forEach(m => {
+                const btn = document.getElementById(`tile-method-${m.id}`);
+                if (!btn) return;
+                btn.classList.toggle("active", m.id === tileMethod);
+                btn.style.opacity = m.id === tileMethod ? "1" : "0.6";
+            });
+        }
+
+        function setTile(site, on) {
+            const splat = tileSplats[`${site}_${tileMethod}`];
+            if (!splat) return;
+            if (on && tileScene.objects.indexOf(splat) < 0) tileScene.addObject(splat);
+            if (!on) safeRemoveFromTileScene(splat);
+            tileActive[site] = on;
+            syncTileSceneVisibility();
+        }
+        window.toggleTile = async (site) => {
+            const on = !tileActive[site];
+            if (on && !tileSplats[`${site}_${tileMethod}`]) {
+                tileActive[site] = true;                    // remember intent
+                await loadTilesSequentially([site], ++largerToken);
+                return;
+            }
+            setTile(site, on);
+        };
         window.setAllTiles = (on) => TILE_SITES.forEach(site => setTile(site, on));
+
+        // Load the given sites' tiles (current method) one after another and
+        // show each as soon as it arrives, so the mosaic visibly grows.
+        async function loadTilesSequentially(sitesToLoad, token) {
+            const method = tileMethod;
+            for (const site of sitesToLoad) {
+                if (token !== largerToken || method !== tileMethod) return;
+                const tbtn = document.getElementById(`tile-btn-${site}`);
+                const pb = tbtn ? tbtn.querySelector(".progress-bar") : null;
+                if (tbtn) tbtn.style.opacity = "0.5";
+                try {
+                    await loadTile(site, method, (progress) => {
+                        if (pb && token === largerToken) pb.style.width = `${Math.min(70, progress * 70)}%`;
+                    });
+                } catch (err) {
+                    console.error(`Tile load failed: ${site} (${method})`, err);
+                    if (tbtn) tbtn.style.opacity = "0.2";
+                    continue;
+                }
+                if (pb) pb.style.width = "0%";
+                if (token !== largerToken || method !== tileMethod) return;
+                setTile(site, true);
+            }
+        }
+
+        window.switchTileMethod = async (method) => {
+            if (!largerMode || method === tileMethod) return;
+            const token = ++largerToken;
+            // Drop the old method's layer from the scene...
+            for (const site of TILE_SITES) {
+                const old = tileSplats[`${site}_${tileMethod}`];
+                if (old) safeRemoveFromTileScene(old);
+            }
+            tileMethod = method;
+            // ...and bring in the same set of active tiles for the new one.
+            const wanted = TILE_SITES.filter(site => tileActive[site]);
+            const cached = wanted.filter(site => tileSplats[`${site}_${method}`]);
+            cached.forEach(site => setTile(site, true));
+            syncTileSceneVisibility();
+            await loadTilesSequentially(wanted.filter(site => !tileSplats[`${site}_${method}`]), token);
+        };
 
         function renderTileButtons() {
             const navBar = document.getElementById("nav-bar");
             navBar.innerHTML = "";
             const cap = document.createElement("div");
             cap.className = "tile-caption";
-            cap.innerHTML = "<b>Large Area &middot; SatSplatDiff</b><br>" +
-                "4 sites reconstructed separately, cropped along Voronoi borders<br>" +
-                "<span class=\"hint\">Click a tile to hide / show it and inspect the seams</span>";
+            cap.innerHTML = "<b>Large Area</b><br>" +
+                "4 sites reconstructed separately,<br>cropped along Voronoi borders<br>" +
+                "<span class=\"hint\">Toggle tiles to inspect the seams</span>";
             navBar.appendChild(cap);
+            const methodGroup = document.createElement("div");
+            methodGroup.className = "tile-group";
+            TILE_METHODS.forEach(m => {
+                const btn = document.createElement("button");
+                btn.id = `tile-method-${m.id}`;
+                btn.className = "nav-btn tile-method-btn";
+                btn.onclick = () => switchTileMethod(m.id);
+                btn.innerHTML = `${m.label}<div class="progress-bar"></div>`;
+                methodGroup.appendChild(btn);
+            });
+            navBar.appendChild(methodGroup);
+            const sep = document.createElement("div");
+            sep.className = "tile-sep";
+            navBar.appendChild(sep);
             TILE_SITES.forEach(site => {
                 const btn = document.createElement("button");
                 btn.id = `tile-btn-${site}`;
@@ -556,7 +640,7 @@
             all.className = "nav-btn";
             all.style.opacity = "0.6";
             all.onclick = () => {
-                const anyOff = TILE_SITES.some(s => tileSplats[s] && !tileActive[s]);
+                const anyOff = TILE_SITES.some(s => tileSplats[`${s}_${tileMethod}`] && !tileActive[s]);
                 setAllTiles(anyOff);
             };
             all.innerHTML = `All<div class="progress-bar"></div>`;
@@ -596,25 +680,8 @@
             // Keep whatever is already active; everything loaded before is shown
             if (tileScene.objects.length > 0) currentScene = tileScene;
 
-            // Load tiles one after another and switch each on as it arrives,
-            // so the mosaic visibly grows tile by tile.
-            for (const site of TILE_SITES) {
-                if (token !== largerToken) return;
-                const tbtn = document.getElementById(`tile-btn-${site}`);
-                const pb = tbtn ? tbtn.querySelector(".progress-bar") : null;
-                if (tbtn) tbtn.style.opacity = "0.5";
-                try {
-                    await loadTile(site, (progress) => {
-                        if (pb && token === largerToken) pb.style.width = `${Math.min(70, progress * 70)}%`;
-                    });
-                } catch (err) {
-                    console.error(`Tile load failed: ${site}`, err);
-                    continue;
-                }
-                if (pb) pb.style.width = "0%";
-                if (token !== largerToken) return;
-                setTile(site, true);
-            }
+            TILE_SITES.forEach(site => { tileActive[site] = true; });
+            await loadTilesSequentially(TILE_SITES.filter(site => !tileSplats[`${site}_${tileMethod}`]), token);
         };
 
         // =====================================================================
